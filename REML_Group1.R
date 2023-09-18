@@ -66,14 +66,6 @@ loglikef <- function(x) {
   return(c(loglike))
 }
 
-hat.beta <- function(x) {
-  vector.Y <- as.vector(df.bond$pres)
-  matrix.G <- x[1] * diag(1,nrow = 7)
-  matrix.R <- x[2] * diag(1,nrow = 21)
-  matrix.V <- matrix.z %*% matrix.G %*% t(matrix.z) + matrix.R
-  vector.Beta <- solve(t(matrix.x) %*% solve(matrix.V) %*% matrix.x) %*% t(matrix.x) %*% solve(matrix.V) %*% vector.Y
-  return(vector.Beta)
-}
 
 reloglikef <- function(x) {
   vector.Y <- as.vector(df.bond$pres)
