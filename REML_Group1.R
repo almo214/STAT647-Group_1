@@ -8,11 +8,12 @@
 library(lme4)
 library(optimization)
 
-
+# [TODO] Build Function  RMLE_Funct(df, target)
 
 ## Define the data ####
 df.bond <- data.frame(ingot = rep(1:7,each = 3),
                       metal = rep(c("n","i","c"),7),
+                      metal2 = rep(c("n","i","c"),7),
                       pres = c(67,71.9,72.2,
                                67.5,68.8,66.4,
                                76,82.6,74.5,
@@ -20,9 +21,10 @@ df.bond <- data.frame(ingot = rep(1:7,each = 3),
                                73.1,74.2,73.2,
                                65.8,70.8,68.7,
                                75.6,84.9,69))
-df.bond$ingot <- factor(df.bond$ingot)
-df.bond
 
+# Given a dynamic input data frame, convert any non-numeric columns to a factor
+to_factor <- names(df.bond)[!sapply(df.bond,is.numeric)]
+df.bond[to_factor] <- lapply(df.bond[to_factor], factor)
 
 
 
@@ -82,7 +84,10 @@ reloglikef <- function(x) {
 
 print(noquote(c("MLE model values: "))) 
 print(summary(lmm.bond)$varcor)
+
+# Note that the value x applied to the function loglikef is initiliazed using start = in the optim_nm function.
 print(noquote(c("Maximum Likelihood Estimates: ",sqrt(optim_nm(fun = loglikef, k = 2, start = c(1,1),maximum= FALSE, tol = 0.0000000000001)$par))))
+
 
 print(noquote(c("REML model values: "))) 
 print(summary(relmm.bond)$varcor)
