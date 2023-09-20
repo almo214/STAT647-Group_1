@@ -24,7 +24,7 @@ df <- data.frame(ingot = rep(1:7,each = 3),
 Y <- 'pres'
 rfact <- 'ingot'
 
-
+# Scroll down for example function run
 
 RMLE_Funct <- function(df, Y, rfact, rfact_int = 1, sum_print = FALSE){
   # df = dataframe with all data
@@ -69,7 +69,7 @@ RMLE_Funct <- function(df, Y, rfact, rfact_int = 1, sum_print = FALSE){
   # Define X and Z design matrices from model Y = X*Beta + Z*theta + e_iid_noise
   matrix.x <- model.matrix(lmm.mle)
   
-  ###### [TODO] Update with dynamic creation of matrix.z
+  ###### [TODO] Update with dynamic creation of matrix.z. Work in progress below (outside function)
   matrix.z <- matrix(c(1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                      0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                      0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -134,7 +134,7 @@ for (columns in ncol(identity_mat)) {
 
 
 
-# Run the funciton to produce AICs, BICs, and estimator comparisons
+# Run the funciton to produce AICs, BICs, and estimator comparisons ####
 RMLE_Funct(df, Y, rfact, sum_print =  FALSE)
 
 
