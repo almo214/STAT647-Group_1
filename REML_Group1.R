@@ -8,12 +8,11 @@
 library(lme4)
 library(optimization)
 
-# [TODO] Build Function  RMLE_Funct(df, target)
+# [TODO] Build Function  
 
 ## Define the data ####
-df.bond <- data.frame(ingot = rep(1:7,each = 3),
+df <- data.frame(ingot = rep(1:7,each = 3),
                       metal = rep(c("n","i","c"),7),
-                      metal2 = rep(c("n","i","c"),7),
                       pres = c(67,71.9,72.2,
                                67.5,68.8,66.4,
                                76,82.6,74.5,
@@ -22,32 +21,56 @@ df.bond <- data.frame(ingot = rep(1:7,each = 3),
                                65.8,70.8,68.7,
                                75.6,84.9,69))
 
-# Given a dynamic input data frame, convert any non-numeric columns to a factor
-to_factor <- names(df.bond)[!sapply(df.bond,is.numeric)]
-df.bond[to_factor] <- lapply(df.bond[to_factor], factor)
+Y <- 'pres'
+rfact <- 'ingot'
 
 
 
-## Linear mixed model by MLE ####
-lmm.bond <- lmer( pres ~ metal + (1|ingot),REML = FALSE,data = df.bond)
-summary(lmm.bond)
-anova(lmm.bond)
+RMLE_Funct <- function(df, Y, rfact, rfact_int = 1, sum_print = FALSE){
+  # df = dataframe with all data
+  # Y = name of the target variable column
+  # rfact = name of the random factor variable
+  # rfact_int = number of random factor intercepts
+  
+  # Given a dynamic input data frame, convert any non-numeric columns to a factor
+  to_factor <- names(df)[!sapply(df,is.numeric)]
+  df[to_factor] <- lapply(df[to_factor], factor)
+  
+  # Develop the equation for the linear mixed models
+  # List variables that are not the target variable or the random factor variable
+  independent_vars <-  colnames(df)[!colnames(df) %in% c(Y, rfact)]
+  
+  # Create the linear mixed model formula to dynamically accept any dataframe
+  formula_str <- paste(Y, "~", paste(independent_vars, collapse = " + "), "+ (1|", rfact, ")")
 
-## Linear mixed model by REML  ####
-relmm.bond <- lmer( pres ~ metal + (1|ingot),REML = TRUE,data = df.bond)
-summary(relmm.bond)
-anova(relmm.bond)
-
-# Compare AIC/BIC. Note REML provides lowest AIC and BIC
-(AIC_mle <- AIC(lmm.bond))
-(BIC_mle <- BIC(lmm.bond))
-(AIC_reml <- AIC(relmm.bond))
-(BIC_reml <- BIC(relmm.bond))
-
-## Compare covariance estimates ####
-# Define X and Z design matrices from model Y = X*Beta + Z*theta + e_iid_noise
-matrix.x <- model.matrix(lmm.bond)
-matrix.z <- matrix(c(1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  # Fit the linear mixed model
+  lmm.mle <- lmer(as.formula(formula_str), REML = FALSE, data = df)
+  lmm.reml <- lmer(as.formula(formula_str), REML = TRUE, data = df)
+  
+  # Compare AIC/BIC:  Note REML provides lowest AIC and BIC
+  AIC_mle <- AIC(lmm.mle)
+  BIC_mle <- BIC(lmm.mle)
+  AIC_reml <- AIC(lmm.reml)
+  BIC_reml <- BIC(lmm.reml)
+  
+  # Print AIC and BIC values
+  cat("MLE AIC:", AIC_mle, "\n")
+  cat("REML AIC:", AIC_reml, "\n")
+  cat("MLE BIC:", BIC_mle, "\n")
+  cat("REML BIC:", BIC_reml, "\n")
+  cat("\n")
+  # Print model summaries, if user opts to print
+  if (sum_print == TRUE){
+    print(summary(lmm.mle))
+    print(summary(lmm.reml))
+  }
+  
+  ## Compare covariance estimates ####
+  # Define X and Z design matrices from model Y = X*Beta + Z*theta + e_iid_noise
+  matrix.x <- model.matrix(lmm.mle)
+  
+  ###### [TODO] Update with dynamic creation of matrix.z
+  matrix.z <- matrix(c(1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                      0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                      0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,
                      0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,
@@ -55,43 +78,64 @@ matrix.z <- matrix(c(1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,
                      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1),
                    21, 7)
+  
+  # Create functions to calculate estimates using MLE / REML
+  ###### [TODO] Update funcitons with dynamic values based on input
+  loglikef <- function(x) {
+    vector.Y <- as.vector(df$pres)
+    matrix.G <- x[1] * diag(1,nrow = 7)
+    matrix.R <- x[2] * diag(1,nrow = 21)
+    matrix.V <- matrix.z %*% matrix.G %*% t(matrix.z) + matrix.R
+    vector.Beta <- solve(t(matrix.x) %*% solve(matrix.V) %*% matrix.x) %*% t(matrix.x) %*% solve(matrix.V) %*% vector.Y
+    loglike <- log(det(matrix.V)) + t(vector.Y - matrix.x %*% vector.Beta) %*% solve(matrix.V) %*% (vector.Y - matrix.x %*% vector.Beta)
+    return(c(loglike))
+  }
+  
+  
+  reloglikef <- function(x) {
+    vector.Y <- as.vector(df$pres)
+    matrix.G <- x[1] * diag(1,nrow = 7)
+    matrix.R <- x[2] * diag(1,nrow = 21)
+    matrix.V <- matrix.z %*% matrix.G %*% t(matrix.z) + matrix.R
+    vector.Beta <- solve(t(matrix.x) %*% solve(matrix.V) %*% matrix.x) %*% t(matrix.x) %*% solve(matrix.V) %*% vector.Y
+    loglike <- log(det(matrix.V)) + log(det(t(matrix.x) %*% solve(matrix.V) %*% matrix.x)) + t(vector.Y - matrix.x %*% vector.Beta) %*% solve(matrix.V) %*% (vector.Y - matrix.x %*% vector.Beta)
+    return(c(loglike))
+  }
 
+  
+  # Calculate MLE / REML using our functions defined above and compare to lmm / relmm models.
+  # Note that both methods produce estimates very close to the lmm / relmm model values.
+  
+  print(noquote(c("MLE model values: "))) 
+  print(summary(lmm.mle)$varcor)
+  
+  # Note that the value x applied to the function loglikef is initiliazed using start = in the optim_nm function.
+  print(noquote(c("Maximum Likelihood Estimates: ",sqrt(optim_nm(fun = loglikef, k = 2, start = c(1,1),maximum= FALSE, tol = 0.0000000000001)$par))))
+  
+  
+  print(noquote(c("REML model values: "))) 
+  print(summary(lmm.reml)$varcor)
+  print(noquote(c("Restricted / Residual Maximum Likelihood Estimates: ",sqrt(optim_nm(fun = reloglikef, k = 2, start = c(5,6),maximum= FALSE, tol = 0.0000000000001)$par))))
+  
 
-# Create functions to calculate estimates using MLE / REML
-loglikef <- function(x) {
-  vector.Y <- as.vector(df.bond$pres)
-  matrix.G <- x[1] * diag(1,nrow = 7)
-  matrix.R <- x[2] * diag(1,nrow = 21)
-  matrix.V <- matrix.z %*% matrix.G %*% t(matrix.z) + matrix.R
-  vector.Beta <- solve(t(matrix.x) %*% solve(matrix.V) %*% matrix.x) %*% t(matrix.x) %*% solve(matrix.V) %*% vector.Y
-  loglike <- log(det(matrix.V)) + t(vector.Y - matrix.x %*% vector.Beta) %*% solve(matrix.V) %*% (vector.Y - matrix.x %*% vector.Beta)
-  return(c(loglike))
 }
 
 
-reloglikef <- function(x) {
-  vector.Y <- as.vector(df.bond$pres)
-  matrix.G <- x[1] * diag(1,nrow = 7)
-  matrix.R <- x[2] * diag(1,nrow = 21)
-  matrix.V <- matrix.z %*% matrix.G %*% t(matrix.z) + matrix.R
-  vector.Beta <- solve(t(matrix.x) %*% solve(matrix.V) %*% matrix.x) %*% t(matrix.x) %*% solve(matrix.V) %*% vector.Y
-  loglike <- log(det(matrix.V)) + log(det(t(matrix.x) %*% solve(matrix.V) %*% matrix.x)) + t(vector.Y - matrix.x %*% vector.Beta) %*% solve(matrix.V) %*% (vector.Y - matrix.x %*% vector.Beta)
-  return(c(loglike))
+
+
+# [TODO] Automate the creation of matrix.z based on dynamic input, work in progress
+identity_mat <- diag(10)
+duplicated_matrix.z <- matrix(0, nrow = nrow(identity_mat), ncol = 3 * ncol(identity_mat))
+for (columns in ncol(identity_mat)) {
+  start_col <- (i - 1) * ncol(identity_mat) + 1
+  end_col <- i * ncol(identity_mat)
+  duplicated_matrix.z[, start_col:end_col] <- identity_mat
 }
 
-# Calculate MLE / REML using our functions defined above and compare to lmm / relmm models.
-# Note that both methods produce estimates very close to the lmm / relmm model values.
-
-print(noquote(c("MLE model values: "))) 
-print(summary(lmm.bond)$varcor)
-
-# Note that the value x applied to the function loglikef is initiliazed using start = in the optim_nm function.
-print(noquote(c("Maximum Likelihood Estimates: ",sqrt(optim_nm(fun = loglikef, k = 2, start = c(1,1),maximum= FALSE, tol = 0.0000000000001)$par))))
 
 
-print(noquote(c("REML model values: "))) 
-print(summary(relmm.bond)$varcor)
-print(noquote(c("Restricted / Residual Maximum Likelihood Estimates: ",sqrt(optim_nm(fun = reloglikef, k = 2, start = c(5,6),maximum= FALSE, tol = 0.0000000000001)$par))))
+# Run the funciton to produce AICs, BICs, and estimator comparisons
+RMLE_Funct(df, Y, rfact, sum_print =  FALSE)
 
 
 
@@ -102,7 +146,7 @@ print(noquote(c("Restricted / Residual Maximum Likelihood Estimates: ",sqrt(opti
 library(nlme)
 
 
-df.bond <- data.frame(ingot = rep(1:7, each = 3),
+df <- data.frame(ingot = rep(1:7, each = 3),
                       metal = rep(c("n", "i", "c"), 7),
                       pres = c(67, 71.9, 72.2,
                                67.5, 68.8, 66.4,
@@ -111,19 +155,19 @@ df.bond <- data.frame(ingot = rep(1:7, each = 3),
                                73.1, 74.2, 73.2,
                                65.8, 70.8, 68.7,
                                75.6, 84.9, 69))
-df.bond$ingot <- factor(df.bond$ingot)
+df$ingot <- factor(df$ingot)
 
 # Linear mixed model by MLE
-lmm.bond_mle <- lme(pres ~ metal, random = ~1 | ingot, data = df.bond, method = "ML")
+lmm.mle_mle <- lme(pres ~ metal, random = ~1 | ingot, data = df, method = "ML")
 
 # Linear mixed model by REML
-lmm.bond_reml <- lme(pres ~ metal, random = ~1 | ingot, data = df.bond, method = "REML")
+lmm.mle_reml <- lme(pres ~ metal, random = ~1 | ingot, data = df, method = "REML")
 
 # Compare AIC/BIC
-AIC_mle <- AIC(lmm.bond_mle)
-BIC_mle <- BIC(lmm.bond_mle)
-AIC_reml <- AIC(lmm.bond_reml)
-BIC_reml <- BIC(lmm.bond_reml)
+AIC_mle <- AIC(lmm.mle_mle)
+BIC_mle <- BIC(lmm.mle_mle)
+AIC_reml <- AIC(lmm.mle_reml)
+BIC_reml <- BIC(lmm.mle_reml)
 
 # Print AIC and BIC values
 cat("MLE AIC:", AIC_mle, "\n")
@@ -132,7 +176,7 @@ cat("REML AIC:", AIC_reml, "\n")
 cat("REML BIC:", BIC_reml, "\n")
 
 # Summary of MLE model
-summary(lmm.bond_mle)
+summary(lmm.mle_mle)
 
 # Summary of REML model
-summary(lmm.bond_reml)
+summary(lmm.mle_reml)
