@@ -8,7 +8,6 @@
 library(lme4)
 library(optimization)
 
-# [TODO] Build Function  
 
 ## Define the data ####
 df <- data.frame(ingot = rep(1:7,each = 3),
@@ -32,21 +31,7 @@ RMLE_Funct <- function(df, Y, rfact, rfact_int = 1, sum_print = FALSE){
   # rfact = name of the random factor variable
   # rfact_int = number of random factor intercepts
 
-  generate_matrix_z <- function(df, rfact) {
-    unique_levels <- unique(df[[rfact]])  # Get unique levels of the random factor
-    num_observations <- nrow(df)
-    num_levels <- length(unique_levels)
   
-    # Initialize an empty matrix.z
-    matrix.z <- matrix(0, nrow = num_observations, ncol = num_levels)
-  
-    # Populate matrix.z based on the grouping structure
-    for (i in 1:num_levels) {
-      matrix.z[df[[rfact]] == unique_levels[i], i] <- 1
-    }
-  
-    return(matrix.z)
-  }
   
   # Given a dynamic input data frame, convert any non-numeric columns to a factor
   to_factor <- names(df)[!sapply(df,is.numeric)]
@@ -85,20 +70,29 @@ RMLE_Funct <- function(df, Y, rfact, rfact_int = 1, sum_print = FALSE){
   # Define X and Z design matrices from model Y = X*Beta + Z*theta + e_iid_noise
   matrix.x <- model.matrix(lmm.mle)
   
-  ###### [TODO] Update with dynamic creation of matrix.z. Work in progress below (outside function)
-  # matrix.z <- matrix(c(1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  #                    0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  #                    0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,
-  #                    0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,
-  #                    0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,
-  #                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,
-  #                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1),
-  #                  21, 7)
+  # Function to generate the z matrix
+  generate_matrix_z <- function(df, rfact) {
+    unique_levels <- unique(df[[rfact]])  # Get unique levels of the random factor
+    num_observations <- nrow(df)
+    num_levels <- length(unique_levels)
+    
+    # Initialize an empty matrix.z
+    matrix.z <- matrix(0, nrow = num_observations, ncol = num_levels)
+    
+    # Populate matrix.z based on the grouping structure
+    for (i in 1:num_levels) {
+      matrix.z[df[[rfact]] == unique_levels[i], i] <- 1
+    }
+    
+    return(matrix.z)
+  }
+  
+  matrix.z <- generate_matrix_z(df, rfact)
+
   
   # Create functions to calculate estimates using MLE / REML
-  ###### [TODO] Update funcitons with dynamic values based on input
   loglikef <- function(x) {
-    vector.Y <- as.vector(df$pres)
+    vector.Y <- as.vector(df[[Y]])
     matrix.G <- x[1] * diag(1, nrow = ncol(matrix.z))
     matrix.R <- x[2] * diag(1, nrow = nrow(matrix.z))
     matrix.V <- matrix.z %*% matrix.G %*% t(matrix.z) + matrix.R
@@ -109,7 +103,7 @@ RMLE_Funct <- function(df, Y, rfact, rfact_int = 1, sum_print = FALSE){
   
   
   reloglikef <- function(x) {
-    vector.Y <- as.vector(df$pres)
+    vector.Y <- as.vector(df[[Y]])
     matrix.G <- x[1] * diag(1, nrow = ncol(matrix.z))
     matrix.R <- x[2] * diag(1, nrow = nrow(matrix.z))
     matrix.V <- matrix.z %*% matrix.G %*% t(matrix.z) + matrix.R
@@ -136,17 +130,6 @@ RMLE_Funct <- function(df, Y, rfact, rfact_int = 1, sum_print = FALSE){
 
 }
 
-
-
-
-# [TODO] Automate the creation of matrix.z based on dynamic input, work in progress
-identity_mat <- diag(10)
-duplicated_matrix.z <- matrix(0, nrow = nrow(identity_mat), ncol = 3 * ncol(identity_mat))
-for (columns in ncol(identity_mat)) {
-  start_col <- (i - 1) * ncol(identity_mat) + 1
-  end_col <- i * ncol(identity_mat)
-  duplicated_matrix.z[, start_col:end_col] <- identity_mat
-}
 
 
 
