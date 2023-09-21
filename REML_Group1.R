@@ -2,14 +2,23 @@
 # Source -> https://rh8liuqy.github.io/Example_Linear_mixed_model.html
 
 
+# Code Points of Contact:
+# Allison Moore amoore214@tamu.edu
+# Luis Quilarque lgquilarque@tamu.edu
+# Tiffany Chang tiffchang@tamu.edu
+
 # Using lme4 library ####
 # install.packages('lme4')
 # install.packages('optimization')
 library(lme4)
 library(optimization)
 
+# EXAMPLE IMPLEMENTATION
+# RMLE_Funct(df, Y, rfact, sum_print =  FALSE)
+
 
 ## Define the data ####
+# Example df used, please replace with your own
 df <- data.frame(ingot = rep(1:7,each = 3),
                       metal = rep(c("n","i","c"),7),
                       pres = c(67,71.9,72.2,
@@ -20,18 +29,37 @@ df <- data.frame(ingot = rep(1:7,each = 3),
                                65.8,70.8,68.7,
                                75.6,84.9,69))
 
+# You must pass Y, your target variable into our RMLE_Funct as a string.
 Y <- 'pres'
+
+# You must pass rfact, the random factor variable(s) as a string or list of strings.
 rfact <- 'ingot'
 
-# Scroll down for example function run
+
+# Function ####
+
+
+
+# Function to compare MLE and REML
+# df = dataframe with all data
+# Y = name of the target variable column
+# rfact = name of the random factor variable
+# rfact_int = number of random factor intercepts
 
 RMLE_Funct <- function(df, Y, rfact, rfact_int = 1, sum_print = FALSE){
-  # df = dataframe with all data
-  # Y = name of the target variable column
-  # rfact = name of the random factor variable
-  # rfact_int = number of random factor intercepts
 
+
+  # User input validation
+  if (!is.character(Y) | length(Y) >1) {
+    # It's neither a string nor a list of strings
+    print("Please submit your Y, target variable, as a single string.")
+  }
   
+  #User input validation
+  if (!is.character(rfact) && !is.list(rfact)) {
+    # It's neither a string nor a list of strings
+    print("Please submit your rfact, random variable(s), as a string or list of strings.")
+  }
   
   # Given a dynamic input data frame, convert any non-numeric columns to a factor
   to_factor <- names(df)[!sapply(df,is.numeric)]
@@ -130,52 +158,6 @@ RMLE_Funct <- function(df, Y, rfact, rfact_int = 1, sum_print = FALSE){
 
 }
 
-
-
-
-# Run the funciton to produce AICs, BICs, and estimator comparisons ####
+# Run the function to produce AICs, BICs, and estimator comparisons ####
 RMLE_Funct(df, Y, rfact, sum_print =  FALSE)
 
-
-
-
-#  Using nlme library ###############################################################
-
-# install.packages('nlme')
-library(nlme)
-
-
-df <- data.frame(ingot = rep(1:7, each = 3),
-                      metal = rep(c("n", "i", "c"), 7),
-                      pres = c(67, 71.9, 72.2,
-                               67.5, 68.8, 66.4,
-                               76, 82.6, 74.5,
-                               72.7, 78.1, 67.3,
-                               73.1, 74.2, 73.2,
-                               65.8, 70.8, 68.7,
-                               75.6, 84.9, 69))
-df$ingot <- factor(df$ingot)
-
-# Linear mixed model by MLE
-lmm.mle_mle <- lme(pres ~ metal, random = ~1 | ingot, data = df, method = "ML")
-
-# Linear mixed model by REML
-lmm.mle_reml <- lme(pres ~ metal, random = ~1 | ingot, data = df, method = "REML")
-
-# Compare AIC/BIC
-AIC_mle <- AIC(lmm.mle_mle)
-BIC_mle <- BIC(lmm.mle_mle)
-AIC_reml <- AIC(lmm.mle_reml)
-BIC_reml <- BIC(lmm.mle_reml)
-
-# Print AIC and BIC values
-cat("MLE AIC:", AIC_mle, "\n")
-cat("MLE BIC:", BIC_mle, "\n")
-cat("REML AIC:", AIC_reml, "\n")
-cat("REML BIC:", BIC_reml, "\n")
-
-# Summary of MLE model
-summary(lmm.mle_mle)
-
-# Summary of REML model
-summary(lmm.mle_reml)
