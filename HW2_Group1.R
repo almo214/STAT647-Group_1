@@ -6,7 +6,7 @@ source("REML_Group1.R")
 
 
 # Generate data
-n  <- 1000
+n  <- 100
 
 # Part 1 ####
 ## a ####
@@ -50,14 +50,14 @@ sims1 <- matrix(rep(0,50),ncol=2)
 for(i in c(1:50)){
   
   Sigma_grid = fields::Matern(D, alpha=1/.75,nu= 0.5,
-                              phi=1.0)
-  z.grid = rmvnorm(1, mu = rep(5,10), Sigma = Sigma_grid)
+                              phi=1.0)   # Is this the correct thing to use for HW2?
+  z = rmvnorm(1, mu = rep(5,10), Sigma = Sigma_grid)
   
   cov.pars<-c(1,1)
   
   nlm(likelihood.matern, cov.pars, stepmax=5, print.level=2, gradtol=10^(-10))
   
-  cov.pars<-c(5,1) ## initial parameter values
+  cov.pars<-c(1,1) ## initial parameter values
   
   out1 <- nlm(likelihood.matern, cov.pars, stepmax=5, print.level=2, gradtol=10^(-10))
   
