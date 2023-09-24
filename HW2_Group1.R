@@ -16,7 +16,8 @@ library(fields)
 library(MASS)
 # library(RandomFields) # Library for Exponential damping no longer supported
 
-# source("REML_Group1.R") # Note: I commented this out on my Rmd file since the code won't run if I kept it here
+# source("REML_Group1.R") # Note: I commented this out on my Rmd file since the code won't run if I kept 
+# it here
 
 ### Simulations for Model 1 (exponential cov)
 ## Generate data
@@ -99,7 +100,7 @@ for(i in c(1:50)){ # nrow(sims1)=M=50, 1<=i<=50 reps
   
 }
 
-## Obtain distribution, mean, and sd of the simulation
+## Obtain distribution, mean, and sd for each param estimate of the above simulation
 hist(sims1[,1]) # Distribution of gamma^2
 hist(sims1[,2]) # Distribution of rho
 mean(sims1[,1]) - 4 # My guess/interpretation: Center the mean by subtracting gamma^2=4 from it 
