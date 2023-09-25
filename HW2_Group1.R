@@ -14,6 +14,7 @@
 ## Load required libraries
 library(fields)
 library(MASS)
+library(Matrix)
 # library(RandomFields) # Library for Exponential damping no longer supported
 
 # source("REML_Group1.R") # Note: I commented this out on my Rmd file since the code won't run if I kept 
@@ -35,7 +36,9 @@ likelihood.exponential_GMLE <- function(cov.pars) {
   cov <- (sigma^2) * exp(-D / rho)
   
   # Calculate Cholesky decomposition
-  temp <- chol(cov)
+  #temp <- chol(cov)
+  temp <- chol(nearPD(cov)$mat)
+
   
   # Calculate log likelihood components
   logpart <- 2 * sum(log(diag(temp)))
