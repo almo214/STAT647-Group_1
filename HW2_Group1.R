@@ -33,7 +33,8 @@ likelihood.exponential_GMLE <- function(cov.pars) {
   rho <- cov.pars[2]
   
   # Calculate the exponential covariance
-  cov <- (sigma^2) * exp(-D / rho)
+  cov <- (sigma**2) * exp(-D / rho^2) # UPDATE: The GMLE simulation study code originally had rho^2, and 
+  # the outputs made more sense with rho^2 as opposed to rho (not sure why though)
   
   # Calculate Cholesky decomposition
   # temp <- chol(cov) # Original code from GMLE simulation study example - does not work for phi > 1
@@ -58,7 +59,7 @@ likelihood.exponential_REML <- function(cov.pars) {
   rho <- cov.pars[2]
   
   # Calculate the exponential covariance
-  cov <- (sigma^2) * exp(-D / rho)
+  cov <- (sigma^2) * exp(-D / rho^2)
   
   # Calculate Cholesky decomposition
   temp <- chol(nearPD(cov)$mat)
@@ -85,13 +86,15 @@ sims1 <- matrix(rep(0,50),ncol=2)
 ## Obtain the estimates and populate the sims1 table
 for(i in c(1:50)){ # nrow(sims1)=M=50, 1<=i<=50 reps
   
-  Sigma_grid = fields::Matern(D, alpha=1/.75,nu=0.5,phi=4.0) # Is this the correct thing to use for HW2? 
+  Sigma_grid = Matern(D, alpha=1/.75,nu=0.5,phi=4.0) # Is this the correct thing to use for HW2? 
   # A: Not quite! It is correct that you want to use alpha=1/range=1/.75, but phi should be gamma^2=2^2=4
   # since it represents the *marginal variance* of the exponential process
   # Info source: https://rdrr.io/cran/fields/src/R/Matern.R
   
   z = rmvnorm(n = 1, mu = rep(5,n), Sigma = Sigma_grid) # Model 1 --> Mean: 5; Sigma: 
   # cov(ep_1i(s_1),ep_1i(s_2)), n = 1 Y(s) output per simulation rep
+  # UPDATE: I was able to get the empirical bias close to 0 *only* when mu=rep(0,n). I believe this is 
+  # because a location shift in the mean of Y(s) causes the bias and standard deviation to increase
  
   cov.pars<-c(1,1) # initial parameter values
   
@@ -106,11 +109,10 @@ for(i in c(1:50)){ # nrow(sims1)=M=50, 1<=i<=50 reps
 ## Obtain distribution, mean, and sd for each param estimate of the above simulation
 hist(sims1[,1]) # Distribution of gamma^2
 hist(sims1[,2]) # Distribution of rho
-mean(sims1[,1]) - 4 # My guess/interpretation: Center the mean by subtracting gamma^2=4 from it 
-mean(sims1[,2]) - .75 # Center the mean by subtracting rho=.75 from it
-sd(sims1[,1]) # Centering not necessary for standard deviation since it is not affected by a shift in the
-# location of mean
-sd(sims1[,2])
+mean(sims1[,1]) - 4 # Empirical bias of gamma^2: E(gamma^2_hat)-gamma^2 
+mean(sims1[,2]) - .75 # Empirical bias of rho: E(rho_hat)-rho
+sd(sims1[,1]) # Standard deviation of gamma^2
+sd(sims1[,2]) # Standard deviation of rho
 
 ## Method 2: REML
 sims2 <- matrix(rep(0,50),ncol=2)
@@ -137,6 +139,10 @@ mean(sims2[,1]) - 4
 mean(sims2[,2]) - .75
 sd(sims2[,1])
 sd(sims2[,2])
+
+## UPDATE: The values look much different for empirical bias' between GMLE and REML methods, but it seems
+## like the standard errors decreased drastically in REML estimates compared to those of
+## GMLE, indicating that REML is a better estimator than GMLE. 
 
 #########################################################################################################
 
