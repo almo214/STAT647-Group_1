@@ -36,7 +36,7 @@ likelihood.exponential_GMLE <- function(cov.pars) {
   cov <- (sigma^2) * exp(-D / rho)
   
   # Calculate Cholesky decomposition
-  #temp <- chol(cov)
+  # temp <- chol(cov) # Original code from GMLE simulation study example - does not work for phi > 1
   temp <- chol(nearPD(cov)$mat)
 
   
@@ -61,10 +61,10 @@ likelihood.exponential_REML <- function(cov.pars) {
   cov <- (sigma^2) * exp(-D / rho)
   
   # Calculate Cholesky decomposition
-  temp <- chol(cov)
+  temp <- chol(nearPD(cov)$mat)
   
   # Calculate log likelihood components
-  logpart <- 2 * sum(log(diag(temp))) + 2 * (sum(log(diag(t(coords) %*% temp %*% coords ))))
+  logpart <- 2 * sum(log(diag(temp))) + 2 * (sum(log(diag(t(coords) %*% temp %*% coords))))
   # Appears the only difference between GMLE and REML is the second portion of logpart above.
   
   step1 <- forwardsolve(t(temp), t(z))
@@ -86,7 +86,7 @@ sims1 <- matrix(rep(0,50),ncol=2)
 for(i in c(1:50)){ # nrow(sims1)=M=50, 1<=i<=50 reps
   
   Sigma_grid = fields::Matern(D, alpha=1/.75,nu=0.5,phi=4.0) # Is this the correct thing to use for HW2? 
-  # A: Not quite! It is correct that you want to use alpha=1/range=1/.75, but phi should be gamma^2=2^2=4 
+  # A: Not quite! It is correct that you want to use alpha=1/range=1/.75, but phi should be gamma^2=2^2=4
   # since it represents the *marginal variance* of the exponential process
   # Info source: https://rdrr.io/cran/fields/src/R/Matern.R
   
