@@ -112,7 +112,8 @@ for(i in c(1:50)){ # nrow(sims1)=M=50, 1<=i<=50 reps
 
   sims1[i,] <- out2
   
-  ## UPDATE: By squaring all the estimates, the mean gets squared too, which would not be an accurate      ## reflection of the estimated mean [ideally, it should equal to approximately 5]. So we go back and 
+  ## UPDATE: By squaring all the estimates, the mean gets squared too, which would not be an accurate      
+  ## reflection of the estimated mean [ideally, it should equal to approximately 5]. So we go back and 
   ## square root all the mean estimates in col 3 of sims1
   sims1[i,3]=sqrt(sims1[i,3])
   
