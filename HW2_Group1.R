@@ -8,6 +8,7 @@
 ## function cov param's to sigma^2=1 and rho=.75) 
 ## This is just my preliminary edits and annotations to understand the code better. Please double check 
 ## these facts, and correct me if I'm wrong on anything!
+## Look for updated code and annotations with the keyword, "UPDATE: "
 
 #########################################################################################################
 
@@ -29,12 +30,15 @@ D <- rdist(coords) # distance matrix
 
 ## Define GMLE function
 likelihood.exponential_GMLE <- function(cov.pars) {
-  sigma <- cov.pars[1] ## Note: This value corresponds to gamma for Model 1
+  sigma <- cov.pars[1] # Note: This value corresponds to gamma for Model 1
   rho <- cov.pars[2]
+  mu <- cov.pars[3] # UPDATE: This value corresponds to Y(s)_hat (estimated mean)
+  z = z - mu # UPDATE: Subtracted the estimated mean from z so that the parameter estimates calculations 
+  # are accurate when z is centered around close to 0
   
   # Calculate the exponential covariance
-  cov <- (sigma**2) * exp(-D / rho^2) # UPDATE: The GMLE simulation study code originally had rho^2, and 
-  # the outputs made more sense with rho^2 as opposed to rho (not sure why though)
+  cov <- (sigma^2) * exp(-D / rho^2) # The GMLE simulation study code originally had rho^2, and the
+  # outputs made more sense with rho^2 as opposed to rho (not sure why though)
   
   # Calculate Cholesky decomposition
   # temp <- chol(cov) # Original code from GMLE simulation study example - does not work for phi > 1
@@ -54,6 +58,10 @@ likelihood.exponential_GMLE <- function(cov.pars) {
 }
 
 ## Define REML function
+## UPDATE: The second term of "logpart" isn't accurate. Manually coding out the second part will be 
+## cumbersome, so prof. recommended us to find the REML package in R and put in correct parameters 
+## accordingly. Also, estimating the mean of Y(s) isn't necessary for REML, so that is why parameter 
+## "mu" is not present in the function
 likelihood.exponential_REML <- function(cov.pars) {
   sigma <- cov.pars[1]
   rho <- cov.pars[2]
@@ -78,10 +86,12 @@ likelihood.exponential_REML <- function(cov.pars) {
   return(temp4 / 2)
 }
 
-## Create a table for the parameter estimates per simulation. Set the number of simulations, M=50 reps
+## Create a table for the parameter and mean estimates per simulation. Set the number of simulations, 
+## M=50 reps
 ## (Note: Will eventually change M to 1000 once we get the code working properly for small sim size.)
 ## Method 1: GMLE
-sims1 <- matrix(rep(0,50),ncol=2)
+sims1 <- matrix(NA, nrow=50, ncol=3) # UPDATE: Added a third column in the sims matrix that stores the 
+# estimates for the Y(s)_hat
 
 ## Obtain the estimates and populate the sims1 table
 for(i in c(1:50)){ # nrow(sims1)=M=50, 1<=i<=50 reps
@@ -93,10 +103,8 @@ for(i in c(1:50)){ # nrow(sims1)=M=50, 1<=i<=50 reps
   
   z = rmvnorm(n = 1, mu = rep(5,n), Sigma = Sigma_grid) # Model 1 --> Mean: 5; Sigma: 
   # cov(ep_1i(s_1),ep_1i(s_2)), n = 1 Y(s) output per simulation rep
-  # UPDATE: I was able to get the empirical bias close to 0 *only* when mu=rep(0,n). I believe this is 
-  # because a location shift in the mean of Y(s) causes the bias and standard deviation to increase
  
-  cov.pars<-c(1,1) # initial parameter values
+  cov.pars<-c(1,1,1) # initial parameter values
   
   out1 <- nlm(likelihood.exponential_GMLE, cov.pars, stepmax=5, print.level=2, gradtol=10^(-10))
 
@@ -104,22 +112,29 @@ for(i in c(1:50)){ # nrow(sims1)=M=50, 1<=i<=50 reps
 
   sims1[i,] <- out2
   
+  ## UPDATE: By squaring all the estimates, the mean gets squared too, which would not be an accurate      ## reflection of the estimated mean [ideally, it should equal to approximately 5]. So we go back and 
+  ## square root all the mean estimates in col 3 of sims1
+  sims1[i,3]=sqrt(sims1[i,3])
+  
 }
 
 ## Obtain distribution, mean, and sd for each param estimate of the above simulation
 hist(sims1[,1]) # Distribution of gamma^2
 hist(sims1[,2]) # Distribution of rho
+hist(sims1[,3]) # UPDATE: Distribution of Y(s)
 mean(sims1[,1]) - 4 # Empirical bias of gamma^2: E(gamma^2_hat)-gamma^2 
 mean(sims1[,2]) - .75 # Empirical bias of rho: E(rho_hat)-rho
+mean(sims1[,3]) - 5 # Empirical bias of Y(s): E(Y(s)_hat)-Y(s)
 sd(sims1[,1]) # Standard deviation of gamma^2
 sd(sims1[,2]) # Standard deviation of rho
+sd(sims1[,3]) # Standard deviation of Y(s)
 
 ## Method 2: REML
-sims2 <- matrix(rep(0,50),ncol=2)
+sims2 <- matrix(NA, nrow=50, ncol=2)
 
 for(i in c(1:50)){ 
   
-  Sigma_grid = fields::Matern(D, alpha=1/.75,nu=0.5,phi=4.0) 
+  Sigma_grid = Matern(D, alpha=1/.75,nu=0.5,phi=4.0) 
   
   z = rmvnorm(n = 1, mu = rep(5,n), Sigma = Sigma_grid)
  
@@ -140,9 +155,8 @@ mean(sims2[,2]) - .75
 sd(sims2[,1])
 sd(sims2[,2])
 
-## UPDATE: The values look much different for empirical bias' between GMLE and REML methods, but it seems
-## like the standard errors decreased drastically in REML estimates compared to those of
-## GMLE, indicating that REML is a better estimator than GMLE. 
+## UPDATE: Code for 1D sims --> HW#1 (but GMLE and REML functions remain the same; both 1D and 2D use the
+## same likelihood functions)
 
 #########################################################################################################
 
