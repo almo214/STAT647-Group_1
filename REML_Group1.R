@@ -1,163 +1,174 @@
-# Group 1 REML Code adapted from:
-# Source -> https://rh8liuqy.github.io/Example_Linear_mixed_model.html
+## Title: STAT 647 Group 1 Code for HW#2
 
 
-# Code Points of Contact:
-# Allison Moore amoore214@tamu.edu
-# Luis Quilarque lgquilarque@tamu.edu
-# Tiffany Chang tiffchang@tamu.edu
-
-# Using lme4 library ####
-# install.packages('lme4')
-# install.packages('optimization')
-library(lme4)
-library(optimization)
-
-# EXAMPLE IMPLEMENTATION
-# RMLE_Funct(df, Y, rfact, sum_print =  FALSE)
+## Code Points of Contact:
+# 1. Allison Moore amoore214@tamu.edu
+# 2. Luis Quilarque lgquilarque@tamu.edu
+# 3. Tiffany Chang tiffchang@tamu.edu
 
 
-## Define the data ####
-# Example df used, please replace with your own
-df <- data.frame(ingot = rep(1:7,each = 3),
-                      metal = rep(c("n","i","c"),7),
-                      pres = c(67,71.9,72.2,
-                               67.5,68.8,66.4,
-                               76,82.6,74.5,
-                               72.7,78.1,67.3,
-                               73.1,74.2,73.2,
-                               65.8,70.8,68.7,
-                               75.6,84.9,69))
-
-# You must pass Y, your target variable into our RMLE_Funct as a string.
-Y <- 'pres'
-
-# You must pass rfact, the random factor variable(s) as a string or list of strings.
-rfact <- 'ingot'
+## Required libraries
+library(fields)
+library(MASS)
+library(Matrix)
+library(geoR) 
 
 
-# Function ####
-
-
-
-# Function to compare MLE and REML
-# df = dataframe with all data
-# Y = name of the target variable column
-# rfact = name of the random factor variable
-# rfact_int = number of random factor intercepts
-
-RMLE_Funct <- function(df, Y, rfact, rfact_int = 1, sum_print = FALSE){
-
-
-  # User input validation
-  if (!is.character(Y) | length(Y) >1) {
-    # It's neither a string nor a list of strings
-    print("Please submit your Y, target variable, as a single string.")
-  }
+## GMLE Function
+likelihood.exponential_GMLE <- function(cov.pars) {
+  gamma <- cov.pars[1] 
+  rho <- cov.pars[2] 
+  mu <- cov.pars[3] # Corresponds to Y(s)_hat (estimated mean)
+  z = z - mu # Subtracted the estimated mean from z so that the parameter estimates calculations are 
+  # accurate when z is centered around close to 0
   
-  #User input validation
-  if (!is.character(rfact) && !is.list(rfact)) {
-    # It's neither a string nor a list of strings
-    print("Please submit your rfact, random variable(s), as a string or list of strings.")
-  }
+  # Calculate the exponential covariance
+  cov <- (gamma^2) * exp(-D / rho^2)
   
-  # Given a dynamic input data frame, convert any non-numeric columns to a factor
-  to_factor <- names(df)[!sapply(df,is.numeric)]
-  df[to_factor] <- lapply(df[to_factor], factor)
-  
-  # Develop the equation for the linear mixed models
-  # List variables that are not the target variable or the random factor variable
-  independent_vars <-  colnames(df)[!colnames(df) %in% c(Y, rfact)]
-  
-  # Create the linear mixed model formula to dynamically accept any dataframe
-  formula_str <- paste(Y, "~", paste(independent_vars, collapse = " + "), "+ (1|", rfact, ")")
+  # Calculate Cholesky decomposition
+  temp <- chol(nearPD(cov)$mat)
 
-  # Fit the linear mixed model
-  lmm.mle <- lmer(as.formula(formula_str), REML = FALSE, data = df)
-  lmm.reml <- lmer(as.formula(formula_str), REML = TRUE, data = df)
+  # Calculate log likelihood components
+  logpart <- 2 * sum(log(diag(temp)))
+  step1 <- forwardsolve(t(temp), t(z))
+  step2 <- backsolve(temp, step1)
+  exponentpart <- z %*% step2
   
-  # Compare AIC/BIC:  Note REML provides lowest AIC and BIC
-  AIC_mle <- AIC(lmm.mle)
-  BIC_mle <- BIC(lmm.mle)
-  AIC_reml <- AIC(lmm.reml)
-  BIC_reml <- BIC(lmm.reml)
+  # Negative log-likelihood
+  temp4 <- logpart + exponentpart
   
-  # Print AIC and BIC values
-  cat("MLE AIC:", AIC_mle, "\n")
-  cat("REML AIC:", AIC_reml, "\n")
-  cat("MLE BIC:", BIC_mle, "\n")
-  cat("REML BIC:", BIC_reml, "\n")
-  cat("\n")
-  # Print model summaries, if user opts to print
-  if (sum_print == TRUE){
-    print(summary(lmm.mle))
-    print(summary(lmm.reml))
-  }
-  
-  ## Compare covariance estimates ####
-  # Define X and Z design matrices from model Y = X*Beta + Z*theta + e_iid_noise
-  matrix.x <- model.matrix(lmm.mle)
-  
-  # Function to generate the z matrix
-  generate_matrix_z <- function(df, rfact) {
-    unique_levels <- unique(df[[rfact]])  # Get unique levels of the random factor
-    num_observations <- nrow(df)
-    num_levels <- length(unique_levels)
-    
-    # Initialize an empty matrix.z
-    matrix.z <- matrix(0, nrow = num_observations, ncol = num_levels)
-    
-    # Populate matrix.z based on the grouping structure
-    for (i in 1:num_levels) {
-      matrix.z[df[[rfact]] == unique_levels[i], i] <- 1
-    }
-    
-    return(matrix.z)
-  }
-  
-  matrix.z <- generate_matrix_z(df, rfact)
+  return(temp4 / 2)
+}
 
-  
-  # Create functions to calculate estimates using MLE / REML
-  loglikef <- function(x) {
-    vector.Y <- as.vector(df[[Y]])
-    matrix.G <- x[1] * diag(1, nrow = ncol(matrix.z))
-    matrix.R <- x[2] * diag(1, nrow = nrow(matrix.z))
-    matrix.V <- matrix.z %*% matrix.G %*% t(matrix.z) + matrix.R
-    vector.Beta <- solve(t(matrix.x) %*% solve(matrix.V) %*% matrix.x) %*% t(matrix.x) %*% solve(matrix.V) %*% vector.Y
-    loglike <- log(det(matrix.V)) + t(vector.Y - matrix.x %*% vector.Beta) %*% solve(matrix.V) %*% (vector.Y - matrix.x %*% vector.Beta)
-    return(c(loglike))
-  }
-  
-  
-  reloglikef <- function(x) {
-    vector.Y <- as.vector(df[[Y]])
-    matrix.G <- x[1] * diag(1, nrow = ncol(matrix.z))
-    matrix.R <- x[2] * diag(1, nrow = nrow(matrix.z))
-    matrix.V <- matrix.z %*% matrix.G %*% t(matrix.z) + matrix.R
-    vector.Beta <- solve(t(matrix.x) %*% solve(matrix.V) %*% matrix.x) %*% t(matrix.x) %*% solve(matrix.V) %*% vector.Y
-    loglike <- log(det(matrix.V)) + log(det(t(matrix.x) %*% solve(matrix.V) %*% matrix.x)) + t(vector.Y - matrix.x %*% vector.Beta) %*% solve(matrix.V) %*% (vector.Y - matrix.x %*% vector.Beta)
-    return(c(loglike))
-  }
+#########################################################################################################
 
+## Here is an example implementation for exponential cov:
+
+## 1. Set a seed for consistent random generation
+set.seed(42)
+
+## 2. Generate the data
+n <- 100
+coords <- cbind(runif(n, 0, 2), runif(n, 0, 2)) # Random 2-D coordinates
+
+## 3. Define the Exponential Matern Cov parameters and distance matrix
+rho <- .75
+alpha <- 1 / rho
+nu <- 0.5
+phi <- 4.0
+D <- rdist(coords) # Distance matrix
+
+## 4. Create a table for the parameter and mean estimates per simulation. Set the number of simulations, 
+## M=50 reps
+sims1 <- matrix(NA, nrow=50, ncol=3) # Add a third column in the sims matrix that stores the estimates 
+# for Y(s)_hat
+
+## Obtain the estimates and populate the sims1 table
+for(i in c(1:50)){ # nrow(sims1)=M=50, 1<=i<=50 reps
   
-  # Calculate MLE / REML using our functions defined above and compare to lmm / relmm models.
-  # Note that both methods produce estimates very close to the lmm / relmm model values.
+  Sigma_grid <- Matern(D, alpha = alpha, nu = nu, phi = phi) # alpha=1/rho=1/.75; phi=gamma^2=2^2=4
   
-  print(noquote(c("MLE model values: "))) 
-  print(summary(lmm.mle)$varcor)
+  z <- rmvnorm(n = 1, mu = rep(5, n), Sigma = Sigma_grid) # Mean: 5; Sigma: cov(ep_1(s_1),ep_1(s_2)); 
+  # n = 1 Y(s) output per simulation rep
+ 
+  cov.pars <- c(1, 1, 1) # Initial parameter values
   
-  # Note that the value x applied to the function loglikef is initiliazed using start = in the optim_nm function.
-  print(noquote(c("Maximum Likelihood Estimates: ",sqrt(optim_nm(fun = loglikef, k = 2, start = c(1,1),maximum= FALSE, tol = 0.0000000000001)$par))))
+  out1 <- nlm(likelihood.exponential_GMLE, cov.pars, stepmax=5, print.level=2, gradtol=10^(-10))
+
+  out2 <- (out1$est)**2
+
+  sims1[i,] <- out2
   
+  ## By squaring all the estimates, the mean gets squared too, which would not be an accurate reflection 
+  ## of the estimated mean [ideally, it should equal to approximately 5]. So we go back and square root 
+  ## all the mean estimates in col 3 of sims1
+  sims1[i,3] <- sqrt(sims1[i,3])
   
-  print(noquote(c("REML model values: "))) 
-  print(summary(lmm.reml)$varcor)
-  print(noquote(c("Restricted / Residual Maximum Likelihood Estimates: ",sqrt(optim_nm(fun = reloglikef, k = 2, start = c(5,6),maximum= FALSE, tol = 0.0000000000001)$par))))
+}
+
+## 5. Obtain distribution, mean, and sd for each param estimate of the above simulation
+hist(sims1[,1]) # Distribution of gamma^2
+hist(sims1[,2]) # Distribution of rho
+hist(sims1[,3]) # Distribution of Y(s)
+mean(sims1[,1]) - 4 # Empirical bias of gamma^2: E(gamma^2_hat)-gamma^2 
+mean(sims1[,2]) - .75 # Empirical bias of rho: E(rho_hat)-rho
+mean(sims1[,3]) - 5 # Empirical bias of Y(s): E(Y(s)_hat)-Y(s)
+sd(sims1[,1]) # Standard deviation of gamma^2
+sd(sims1[,2]) # Standard deviation of rho
+sd(sims1[,3]) # Standard deviation of Y(s)
+
+
+## REML Function
+# It is not custom defined but here is a layout of what inputs to use
+# Note: It fits separate Matern models for each column of 'z' using REML
+# Note: We seem to be getting much smaller estimates for range, this is something we will go back and modify!
+# variogram_fits <- lapply(1:ncol(z), function(col) {
+#   likfit(
+#     geodata = list(coords = coords, data = z[, col]), # Use each column of 'z'
+#     ini.cov.pars = c(1, 1), 
+#     fix.nugget = TRUE, # Assuming a fixed nugget
+#     lik.method = "REML" # Use REML estimation
+#   )
+# })
+
+#########################################################################################################
+
+## Here is an example implementation for exponential cov:
+
+## 1. Set a seed for consistent random generation
+set.seed(42)
+
+## 2. Generate the data
+n <- 100
+coords <- cbind(runif(n, 0, 2), runif(n, 0, 2)) # Random 2-D coordinates
+
+## 3. Define the Exponential Matern Cov parameters and distance matrix
+rho <- .75
+alpha <- 1 / rho
+nu <- 0.5
+phi <- 4.0
+D <- rdist(coords) # Distance matrix
+
+## 4. Run simulations using REML
+## Note: I am only using 5 sims since the computer crashes with M=50. I would *highly* recommend using
+## cluster to run larger number of sims.
+sims2 <- matrix(NA, nrow=5, ncol=2)
+
+for(i in c(1:5)){ 
   
+  Sigma_grid <- Matern(D, alpha = alpha, nu = nu, phi = phi) # Generate the Matern covariance matrix, 
+  # Sigma_grid
+  
+  z <- rmvnorm(n = n, mean = rep(0, n), sigma = Sigma_grid) # Using Exponential cov. function
+  # Generate the observed data 'z' using multivariate normal distribution
+  # We are setting the mean = 0 since REML circumvents estimating the mean
+ 
+  # Fit separate Matern models for each column of 'z' using REML
+  variogram_fits <- lapply(1:ncol(z), function(col) {
+    likfit(
+      geodata = list(coords = coords, data = z[, col]), # Use each column of 'z'
+      ini.cov.pars = c(1, 1), 
+      fix.nugget = TRUE, # Assuming a fixed nugget
+      lik.method = "REML" # Use REML estimation
+    )
+  })
+  
+  # Calculate the average values of the model parameters
+  avg_params <- sapply(variogram_fits, function(fit) {
+    cov.pars <- fit$cov.pars
+  })
+  
+  # Store the average values of the model parameters
+  out2 <- rowMeans(avg_params) # Average Model Parameters for Exponential Cov
+
+  sims2[i,] <- out2
 
 }
 
-# Run the function to produce AICs, BICs, and estimator comparisons ####
-RMLE_Funct(df, Y, rfact, sum_print =  FALSE)
-
+## 5. Obtain distribution, mean, and sd for each param estimate of the above simulation
+hist(sims2[,1])
+hist(sims2[,2])
+mean(sims2[,1]) - 4
+mean(sims2[,2]) - .75
+sd(sims2[,1])
+sd(sims2[,2])
