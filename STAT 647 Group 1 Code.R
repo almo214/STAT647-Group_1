@@ -27,7 +27,7 @@ likelihood.exponential_GMLE <- function(cov.pars) {
   
   # Calculate Cholesky decomposition
   temp <- chol(nearPD(cov)$mat)
-
+  
   # Calculate log likelihood components
   logpart <- 2 * sum(log(diag(temp)))
   step1 <- forwardsolve(t(temp), t(z))
@@ -70,13 +70,13 @@ for(i in c(1:50)){ # nrow(sims1)=M=50, 1<=i<=50 reps
   
   z <- rmvnorm(n = 1, mu = rep(5, n), Sigma = Sigma_grid) # Mean: 5; Sigma: cov(ep_1(s_1),ep_1(s_2)); 
   # n = 1 Y(s) output per simulation rep
- 
+  
   cov.pars <- c(1, 1, 1) # Initial parameter values
   
   out1 <- nlm(likelihood.exponential_GMLE, cov.pars, stepmax=5, print.level=2, gradtol=10^(-10))
-
+  
   out2 <- (out1$est)**2
-
+  
   sims1[i,] <- out2
   
   ## By squaring all the estimates, the mean gets squared too, which would not be an accurate reflection 
@@ -142,7 +142,7 @@ for(i in c(1:5)){
   z <- rmvnorm(n = n, mean = rep(0, n), sigma = Sigma_grid) # Using Exponential cov. function
   # Generate the observed data 'z' using multivariate normal distribution
   # We are setting the mean = 0 since REML circumvents estimating the mean
- 
+  
   # Fit separate Matern models for each column of 'z' using REML
   variogram_fits <- lapply(1:ncol(z), function(col) {
     likfit(
@@ -160,9 +160,9 @@ for(i in c(1:5)){
   
   # Store the average values of the model parameters
   out2 <- rowMeans(avg_params) # Average Model Parameters for Exponential Cov
-
+  
   sims2[i,] <- out2
-
+  
 }
 
 ## 5. Obtain distribution, mean, and sd for each param estimate of the above simulation
