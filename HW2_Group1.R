@@ -43,21 +43,20 @@ likelihood.exponential_GMLE <- function(cov.pars) {
   
   # Calculate Cholesky decomposition
   # temp <- chol(cov) # Original code from GMLE simulation study example - does not work for phi > 1
-  temp <- chol(nearPD(cov)$mat)
+    temp <- chol(nearPD(cov)$mat)
+    
+    # Calculate log likelihood components
+    logpart <- 2 * sum(log(diag(temp)))
+    step1 <- forwardsolve(t(temp), t(z))
+    step2 <- backsolve(temp, step1)
+    exponentpart <- z %*% step2
+    
+    # Negative log-likelihood
+    temp4 <- logpart + exponentpart
+    
+    return(temp4 / 2)
 
-  
-  # Calculate log likelihood components
-  logpart <- 2 * sum(log(diag(temp)))
-  step1 <- forwardsolve(t(temp), t(z))
-  step2 <- backsolve(temp, step1)
-  exponentpart <- z %*% step2
-  
-  # Negative log-likelihood
-  temp4 <- logpart + exponentpart
-  
-  return(temp4 / 2)
 }
-
 
 
 
@@ -99,6 +98,7 @@ for(i in c(1:1000)){ # nrow(sims1)=M=50, 1<=i<=50 reps
  
   cov.pars<-c(1,1,1) # initial parameter values
   
+  tryCatch ({
   out1 <- nlm(likelihood.exponential_GMLE, cov.pars, stepmax=2, print.level=0, gradtol=10^(-6))
 
   out2 <- (out1$est)**2
@@ -110,6 +110,9 @@ for(i in c(1:1000)){ # nrow(sims1)=M=50, 1<=i<=50 reps
   ## square root all the mean estimates in col 3 of sims1
   sims1[i,3]=sqrt(sims1[i,3])
   print(i)
+  }, error = function(e) {
+    sims1[i,] <- c(NA, NA, NA)
+  })
 }
 
 ## Obtain distribution, mean, and sd for each param estimate of the above simulation
