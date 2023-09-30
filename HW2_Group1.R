@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 ## Question 1
 
 ## b) - Part i
@@ -69,7 +69,7 @@ likelihood.exponential_GMLE <- function(cov.pars) {
 set.seed(42)
 n  <- 100
 
-coords <- cbind(runif(n,0,2),runif(n,0,2)) # Over range [0, 2]
+coords <- cbind(runif(n,0,10),runif(n,0,10)) # Over range [0, 2]
 D <- rdist(coords) # distance matrix
 
 
@@ -117,15 +117,15 @@ for(i in c(1:1000)){ # nrow(sims1)=M=50, 1<=i<=50 reps
 }
 
 ## Obtain distribution, mean, and sd for each param estimate of the above simulation
-hist(sims1[,1]) # Distribution of gamma^2
-hist(sims1[,2]) # Distribution of rho
-hist(sims1[,3]) # UPDATE: Distribution of Y(s)
-mean(sims1[,1]) - 4 # Empirical bias of gamma^2: E(gamma^2_hat)-gamma^2 
-mean(sims1[,2]) - .75 # Empirical bias of rho: E(rho_hat)-rho
-mean(sims1[,3]) - 5 # Empirical bias of Y(s): E(Y(s)_hat)-Y(s)
-sd(sims1[,1]) # Standard deviation of gamma^2
-sd(sims1[,2]) # Standard deviation of rho
-sd(sims1[,3]) # Standard deviation of Y(s)
+hist(sims1[,1], main ="Histograms GMLE [0, 10], Exponential", xlab ='sigma') # Distribution of gamma^2
+hist(sims1[,2], main='', xlab ='rho') # Distribution of rho
+hist(sims1[,3], main='', xlab ='mean') # UPDATE: Distribution of Y(s)
+mean(sims1[,1], na.rm =TRUE) - 4 # Empirical bias of gamma^2: E(gamma^2_hat)-gamma^2 
+mean(sims1[,2], na.rm =TRUE) - .75 # Empirical bias of rho: E(rho_hat)-rho
+mean(sims1[,3], na.rm =TRUE) - 5 # Empirical bias of Y(s): E(Y(s)_hat)-Y(s)
+sd(sims1[,1], na.rm =TRUE) # Standard deviation of gamma^2
+sd(sims1[,2], na.rm =TRUE) # Standard deviation of rho
+sd(sims1[,3], na.rm =TRUE) # Standard deviation of Y(s)
 
 ## Method 2: REML
 sims2 <- matrix(NA, nrow=5, ncol=2)
