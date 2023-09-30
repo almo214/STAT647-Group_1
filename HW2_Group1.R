@@ -32,30 +32,28 @@ exp_Damped_cov <- function(h, rho, phi) {
 
 ## Define GMLE function
 likelihood.exponential_GMLE <- function(cov.pars) {
-  sigma <- cov.pars[1] # Note: This value corresponds to gamma for Model 1
-  rho <- cov.pars[2]
-  mu <- cov.pars[3] # UPDATE: This value corresponds to Y(s)_hat (estimated mean)
-  z = z - mu # UPDATE: Subtracted the estimated mean from z so that the parameter estimates calculations 
-  # are accurate when z is centered around close to 0
+  gamma <- cov.pars[1] 
+  rho <- cov.pars[2] 
+  mu <- cov.pars[3] # Corresponds to Y(s)_hat (estimated mean)
+  z = z - mu # Subtracted the estimated mean from z so that the parameter estimates calculations are 
+  # accurate when z is centered around close to 0
   
   # Calculate the exponential covariance
-  cov <- (sigma^2) * exp(-D / rho^2) # The GMLE simulation study code originally had rho^2, and the
-  # outputs made more sense with rho^2 as opposed to rho (not sure why though)
+  cov <- (gamma^2) * exp(-D / rho^2)
   
   # Calculate Cholesky decomposition
-  # temp <- chol(cov) # Original code from GMLE simulation study example - does not work for phi > 1
-    temp <- chol(nearPD(cov)$mat)
-    
-    # Calculate log likelihood components
-    logpart <- 2 * sum(log(diag(temp)))
-    step1 <- forwardsolve(t(temp), t(z))
-    step2 <- backsolve(temp, step1)
-    exponentpart <- z %*% step2
-    
-    # Negative log-likelihood
-    temp4 <- logpart + exponentpart
-    
-    return(temp4 / 2)
+  temp <- chol(cov)
+  
+  # Calculate log likelihood components
+  logpart <- 2 * sum(log(diag(temp)))
+  step1 <- forwardsolve(t(temp), t(z))
+  step2 <- backsolve(temp, step1)
+  exponentpart <- z %*% step2
+  
+  # Negative log-likelihood
+  temp4 <- logpart + exponentpart
+  
+  return(temp4 / 2)
 
 }
 
@@ -67,9 +65,9 @@ likelihood.exponential_GMLE <- function(cov.pars) {
 ### Simulations for Model 1 (exponential cov)
 ## Generate data
 set.seed(42)
-n  <- 1000
+n  <- 100
 
-coords <- cbind(runif(n,0,2),runif(n,0,2)) # Over range [0, 2]
+coords <- cbind(runif(n,0,2), runif(n,0,2)) # Over range [0, 2]
 D <- rdist(coords) # distance matrix
 
 
@@ -89,13 +87,11 @@ sims1 <- matrix(NA, nrow=1000, ncol=3) # UPDATE: Added a third column in the sim
 ## Obtain the estimates and populate the sims1 table
 for(i in c(1:1000)){ # nrow(sims1)=M=50, 1<=i<=50 reps
   set.seed(i)
-  Sigma_grid = Matern(D, alpha=1/.75,nu=0.5,phi=4.0) # Is this the correct thing to use for HW2? 
-  # A: Not quite! It is correct that you want to use alpha=1/range=1/.75, but phi should be gamma^2=2^2=4
-  # since it represents the *marginal variance* of the exponential process
-  # Info source: https://rdrr.io/cran/fields/src/R/Matern.R
   
-  z = rmvnorm(n = 1, mu = rep(5,n), Sigma = Sigma_grid) # Model 1 --> Mean: 5; Sigma: 
-  # cov(ep_1i(s_1),ep_1i(s_2)), n = 1 Y(s) output per simulation rep
+  Sigma_grid <- Matern(D, alpha = alpha, nu = nu, phi = phi) # alpha=1/rho=1/.75; phi=gamma^2=2^2=4
+  
+  z <- rmvnorm(n = 1, mu = rep(5, n), Sigma = Sigma_grid) # Mean: 5; Sigma: cov(ep_1(s_1),ep_1(s_2)); 
+  # n = 1 Y(s) output per simulation rep
  
   cov.pars<-c(1,1,1) # initial parameter values
   
@@ -117,7 +113,7 @@ for(i in c(1:1000)){ # nrow(sims1)=M=50, 1<=i<=50 reps
 }
 
 ## Obtain distribution, mean, and sd for each param estimate of the above simulation
-hist(sims1[,1], main ="Histograms GMLE [0, 2], Exponential, n =1000", xlab ='sigma') # Distribution of gamma^2
+hist(sims1[,1], main ="Histograms GMLE [0, 2], Exponential, n =100", xlab ='sigma') # Distribution of gamma^2
 hist(sims1[,2], main='', xlab ='rho') # Distribution of rho
 hist(sims1[,3], main='', xlab ='mean') # UPDATE: Distribution of Y(s)
 mean(sims1[,1], na.rm =TRUE) - 4 # Empirical bias of gamma^2: E(gamma^2_hat)-gamma^2 
