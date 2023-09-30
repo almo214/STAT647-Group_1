@@ -67,7 +67,7 @@ likelihood.exponential_GMLE <- function(cov.pars) {
 set.seed(42)
 n  <- 100
 
-coords <- cbind(runif(n,0,2), runif(n,0,2)) # Over range [0, 2]
+coords <- cbind(runif(n,0,10), runif(n,0,10)) # Over range [0, 10]
 D <- rdist(coords) # distance matrix
 
 
@@ -112,8 +112,9 @@ for(i in c(1:1000)){ # nrow(sims1)=M=50, 1<=i<=50 reps
   })
 }
 
+par(mfrow=c(3,1))
 ## Obtain distribution, mean, and sd for each param estimate of the above simulation
-hist(sims1[,1], main ="Histograms GMLE [0, 2], Exponential, n =100", xlab ='sigma') # Distribution of gamma^2
+hist(sims1[,1], main ="Histograms GMLE [0, 10], Exponential, n =100", xlab ='sigma') # Distribution of gamma^2
 hist(sims1[,2], main='', xlab ='rho') # Distribution of rho
 hist(sims1[,3], main='', xlab ='mean') # UPDATE: Distribution of Y(s)
 mean(sims1[,1], na.rm =TRUE) - 4 # Empirical bias of gamma^2: E(gamma^2_hat)-gamma^2 
@@ -124,24 +125,25 @@ sd(sims1[,2], na.rm =TRUE) # Standard deviation of rho
 sd(sims1[,3], na.rm =TRUE) # Standard deviation of Y(s)
 
 ## Method 2: REML
-sims2 <- matrix(NA, nrow=5, ncol=2)
+sims2 <- matrix(NA, nrow=1000, ncol=2)
 
-for(i in c(1:5)){ 
-  
+for(i in c(1:1000)){ 
+  set.seed(i)
   Sigma_grid <- Matern(D, alpha = alpha, nu = nu, phi = phi) # Generate the Matern covariance matrix, 
   # Sigma_grid
   
-  z <- rmvnorm(n = n, mean = rep(0, n), sigma = Sigma_grid) # Using Exponential cov. function
+  z <- rmvnorm(n = n, mean = rep(5, n), sigma = Sigma_grid) # Using Exponential cov. function
   # Generate the observed data 'z' using multivariate normal distribution
   # We are setting the mean = 0 since REML circumvents estimating the mean
-  
+  tryCatch ({
   # Fit separate Matern models for each column of 'z' using REML
   variogram_fits <- lapply(1:ncol(z), function(col) {
     likfit(
       geodata = list(coords = coords, data = z[, col]), # Use each column of 'z'
-      ini.cov.pars = c(1, 1), 
+      ini.cov.pars = c(1, .5), 
       fix.nugget = TRUE, # Assuming a fixed nugget
-      lik.method = "REML" # Use REML estimation
+      lik.method = "REML", # Use REML estimation
+      messages =  FALSE
     )
   })
   
@@ -152,18 +154,21 @@ for(i in c(1:5)){
   
   # Store the average values of the model parameters
   out2 <- rowMeans(avg_params) # Average Model Parameters for Exponential Cov
-  
+  print(i)
   sims2[i,] <- out2
-  
+  }, error = function(e) {
+    sims2[i,] <- c(NA, NA)
+  })
 }
 
+par(mfrow=c(2,1))
 ## 5. Obtain distribution, mean, and sd for each param estimate of the above simulation
-hist(sims2[,1])
-hist(sims2[,2])
-mean(sims2[,1]) - 4
-mean(sims2[,2]) - .75
-sd(sims2[,1])
-sd(sims2[,2])
+hist(sims2[,1], main ="Histograms REML [0, 10], Exponential, n =100", xlab ='sigma')
+hist(sims2[,2], main='', xlab ='rho')
+mean(sims2[,1], na.rm =TRUE) - 4
+mean(sims2[,2], na.rm =TRUE) - .75
+sd(sims2[,1], na.rm =TRUE)
+sd(sims2[,2], na.rm =TRUE)
 
 ## UPDATE: Code for 1D sims --> HW#1 (but GMLE and REML functions remain the same; both 1D and 2D use the
 ## same likelihood functions)
@@ -172,7 +177,7 @@ sd(sims2[,2])
 
 ### Simulations for Model 2 (exponential damped cov)
 ## (To be continued...)
-=======
+
 ## Question 1
 
 ## b) - Part i
