@@ -25,7 +25,7 @@ library(geoR)
 
 # Define Exponential Damped covariance 
 exp_Damped_cov <- function(h, rho, phi) {
-  (phi^2) * exp(-h / rho) * cos(h)
+  (phi^2) * exp(-h / rho^2) * cos(h)
 }
 
 
