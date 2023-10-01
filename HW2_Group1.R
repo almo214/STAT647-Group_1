@@ -65,10 +65,24 @@ likelihood.exponential_GMLE <- function(cov.pars) {
 ### Simulations for Model 1 (exponential cov)
 ## Generate data
 set.seed(42)
-n  <- 100
+n  <- 1000
 
+# 1-D
 coords <- cbind(runif(n,0,10), runif(n,0,10)) # Over range [0, 10]
+
+## For 2-D 
+size = 2 # over range [0,size]^2
+coords = expand.grid(seq(0,1,length = size),
+                     seq(0,1,length = size))
+
+
+
+
 D <- rdist(coords) # distance matrix
+
+
+
+
 
 
 rho <- .75
@@ -114,7 +128,7 @@ for(i in c(1:1000)){ # nrow(sims1)=M=50, 1<=i<=50 reps
 
 par(mfrow=c(3,1))
 ## Obtain distribution, mean, and sd for each param estimate of the above simulation
-hist(sims1[,1], main ="Histograms GMLE [0, 10], Exponential, n =100", xlab ='sigma') # Distribution of gamma^2
+hist(sims1[,1], main ="Histograms GMLE [0, 10], Exponential, n =1000", xlab ='sigma') # Distribution of gamma^2
 hist(sims1[,2], main='', xlab ='rho') # Distribution of rho
 hist(sims1[,3], main='', xlab ='mean') # UPDATE: Distribution of Y(s)
 mean(sims1[,1], na.rm =TRUE) - 4 # Empirical bias of gamma^2: E(gamma^2_hat)-gamma^2 
@@ -123,6 +137,8 @@ mean(sims1[,3], na.rm =TRUE) - 5 # Empirical bias of Y(s): E(Y(s)_hat)-Y(s)
 sd(sims1[,1], na.rm =TRUE) # Standard deviation of gamma^2
 sd(sims1[,2], na.rm =TRUE) # Standard deviation of rho
 sd(sims1[,3], na.rm =TRUE) # Standard deviation of Y(s)
+
+
 
 ## Method 2: REML
 sims2 <- matrix(NA, nrow=1000, ncol=2)
@@ -163,7 +179,7 @@ for(i in c(1:1000)){
 
 par(mfrow=c(2,1))
 ## 5. Obtain distribution, mean, and sd for each param estimate of the above simulation
-hist(sims2[,1], main ="Histograms REML [0, 10], Exponential, n =100", xlab ='sigma')
+hist(sims2[,1], main ="Histograms REML [0, 2], Exponential, n =100", xlab ='sigma')
 hist(sims2[,2], main='', xlab ='rho')
 mean(sims2[,1], na.rm =TRUE) - 4
 mean(sims2[,2], na.rm =TRUE) - .75
