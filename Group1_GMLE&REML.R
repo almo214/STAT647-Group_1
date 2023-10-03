@@ -175,3 +175,78 @@ sd(sims2[,2])
 
 ## NOTE: Need to fix REML rho parameter estimation. Would recommend doing research on likfit() function 
 ## in order to figure how to estimate it correctly.
+
+########################################################################################################
+# Load the geostatsp library for damped covariance
+library(geostatsp)
+
+# 1. Set a seed for consistent random generation
+set.seed(42)
+
+# 2. Generate the data
+n <- 100
+coords <- cbind(runif(n, 0, 2), runif(n, 0, 2)) # Random 2-D coordinates
+
+# 3. Define the Damped Covariance parameters and distance matrix
+phi <- 4.0
+range_par <- 0.75 # Range parameter for damped covariance
+nugget <- 0.0 # Nugget parameter
+
+D <- rdist(coords) # Distance matrix
+
+# Define a custom damped covariance function
+damped_covariance <- function(D, phi, range, nugget) {
+  exp(-D / range) * (1 + D / (phi * range)) * exp(-D / phi) + nugget
+}
+
+# 4. Run simulations using REML
+sims_damped <- matrix(NA, nrow = 5, ncol = 3)
+
+for (i in 1:5) {
+  
+  # Generate the Damped covariance matrix
+  Sigma_grid <- damped_covariance(D, phi = phi, range = range_par, nugget = nugget)
+  
+  z <- rmvnorm(n = n, mean = rep(0, n), sigma = Sigma_grid) # Generate the observed data 'z'
+  
+  # Fit separate Damped models for each column of 'z' using REML
+  variogram_fits <- lapply(1:ncol(z), function(col) {
+    likfit(
+      geodata = list(coords = coords, data = z[, col]),
+      ini.cov.pars = c(phi, range_par), 
+      fix.nugget = TRUE,
+      lik.method = "REML"
+    )
+  })
+  
+  # Initialize vectors to store the average values of the model parameters
+  avg_phi <- numeric(length(variogram_fits))
+  avg_range <- numeric(length(variogram_fits))
+  avg_nugget <- numeric(length(variogram_fits))
+  
+  # Calculate the average values of the model parameters
+  for (j in 1:length(variogram_fits)) {
+    cov.pars <- variogram_fits[[j]]$cov.pars
+    avg_phi[j] <- cov.pars[1]
+    avg_range[j] <- cov.pars[2]
+    avg_nugget[j] <- cov.pars[3]
+  }
+  
+  # Store the average values of the model parameters for this simulation
+  sims_damped[i, 1] <- mean(avg_phi)
+  sims_damped[i, 2] <- mean(avg_range)
+  sims_damped[i, 3] <- mean(avg_nugget)
+}
+
+# 5. Obtain distribution, mean, and sd for each param estimate of the above simulation
+hist(sims_damped[, 1], main = "Damped Phi")
+hist(sims_damped[, 2], main = "Damped Range")
+hist(sims_damped[, 3], main = "Damped Nugget")
+
+mean(sims_damped[, 1])
+mean(sims_damped[, 2])
+mean(sims_damped[, 3])
+
+sd(sims_damped[, 1])
+sd(sims_damped[, 2])
+sd(sims_damped[, 3])
