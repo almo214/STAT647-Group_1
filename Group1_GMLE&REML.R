@@ -188,24 +188,23 @@ n <- 100
 coords <- cbind(runif(n, 0, 2), runif(n, 0, 2)) # Random 2-D coordinates
 
 # 3. Define the Damped Covariance parameters and distance matrix
-phi <- 4.0
-range_par <- 0.75 # Range parameter for damped covariance
-nugget <- 0.0 # Nugget parameter
+rho <- 0.75
 
 D <- rdist(coords) # Distance matrix
 
-# Define a custom damped covariance function
-damped_covariance <- function(D, phi, range, nugget) {
-  exp(-D / range) * (1 + D / (phi * range)) * exp(-D / phi) + nugget
+# Define a custom damped cosine covariance function
+damped_cosine_covariance <- function(D, rho) {
+  gamma_sq <- 2^2  
+  exp(-D / rho) * gamma_sq * cos(D)
 }
 
 # 4. Run simulations using REML
-sims_damped <- matrix(NA, nrow = 5, ncol = 3)
+sims_damped <- matrix(NA, nrow = 5, ncol = 2)  # Store results in a matrix
 
 for (i in 1:5) {
   
-  # Generate the Damped covariance matrix
-  Sigma_grid <- damped_covariance(D, phi = phi, range = range_par, nugget = nugget)
+  # Generate the Damped cosine covariance matrix
+  Sigma_grid <- damped_cosine_covariance(D, rho = rho)
   
   z <- rmvnorm(n = n, mean = rep(0, n), sigma = Sigma_grid) # Generate the observed data 'z'
   
@@ -213,40 +212,26 @@ for (i in 1:5) {
   variogram_fits <- lapply(1:ncol(z), function(col) {
     likfit(
       geodata = list(coords = coords, data = z[, col]),
-      ini.cov.pars = c(phi, range_par), 
+      ini.cov.pars = c(1, rho),  # Provide initial values for sigmasq and rho
       fix.nugget = TRUE,
       lik.method = "REML"
     )
   })
   
-  # Initialize vectors to store the average values of the model parameters
-  avg_phi <- numeric(length(variogram_fits))
-  avg_range <- numeric(length(variogram_fits))
-  avg_nugget <- numeric(length(variogram_fits))
-  
   # Calculate the average values of the model parameters
-  for (j in 1:length(variogram_fits)) {
-    cov.pars <- variogram_fits[[j]]$cov.pars
-    avg_phi[j] <- cov.pars[1]
-    avg_range[j] <- cov.pars[2]
-    avg_nugget[j] <- cov.pars[3]
-  }
+  avg_params <- sapply(variogram_fits, function(fit) fit$cov.pars[2])  # Extract rho values
   
-  # Store the average values of the model parameters for this simulation
-  sims_damped[i, 1] <- mean(avg_phi)
-  sims_damped[i, 2] <- mean(avg_range)
-  sims_damped[i, 3] <- mean(avg_nugget)
+  # Store the average values of rho and gamma_sq
+  out_damped <- c(mean(avg_params), sqrt(mean(sapply(variogram_fits, function(fit) fit$cov.pars[1]))))
+  
+  sims_damped[i,] <- out_damped
 }
 
-# 5. Obtain distribution, mean, and sd for each param estimate of the above simulation
-hist(sims_damped[, 1], main = "Damped Phi")
-hist(sims_damped[, 2], main = "Damped Range")
-hist(sims_damped[, 3], main = "Damped Nugget")
+# 5. Obtain distribution, mean, and sd for the parameter estimates of the above simulation
+hist(sims_damped[, 1], main = "Damped Cosine Rho")
+hist(sims_damped[, 2], main = "Damped Cosine Gamma")
 
 mean(sims_damped[, 1])
 mean(sims_damped[, 2])
-mean(sims_damped[, 3])
-
 sd(sims_damped[, 1])
 sd(sims_damped[, 2])
-sd(sims_damped[, 3])
