@@ -175,3 +175,63 @@ sd(sims2[,2])
 
 ## NOTE: Need to fix REML rho parameter estimation. Would recommend doing research on likfit() function 
 ## in order to figure how to estimate it correctly.
+
+########################################################################################################
+# Load the geostatsp library for damped covariance
+library(geostatsp)
+
+# 1. Set a seed for consistent random generation
+set.seed(42)
+
+# 2. Generate the data
+n <- 100
+coords <- cbind(runif(n, 0, 2), runif(n, 0, 2)) # Random 2-D coordinates
+
+# 3. Define the Damped Covariance parameters and distance matrix
+rho <- 0.75
+
+D <- rdist(coords) # Distance matrix
+
+# Define a custom damped cosine covariance function
+damped_cosine_covariance <- function(D, rho) {
+  gamma_sq <- 2^2  
+  exp(-D / rho) * gamma_sq * cos(D)
+}
+
+# 4. Run simulations using REML
+sims_damped <- matrix(NA, nrow = 5, ncol = 2)  # Store results in a matrix
+
+for (i in 1:5) {
+  
+  # Generate the Damped cosine covariance matrix
+  Sigma_grid <- damped_cosine_covariance(D, rho = rho)
+  
+  z <- rmvnorm(n = n, mean = rep(0, n), sigma = Sigma_grid) # Generate the observed data 'z'
+  
+  # Fit separate Damped models for each column of 'z' using REML
+  variogram_fits <- lapply(1:ncol(z), function(col) {
+    likfit(
+      geodata = list(coords = coords, data = z[, col]),
+      ini.cov.pars = c(1, rho),  # Provide initial values for sigmasq and rho
+      fix.nugget = TRUE,
+      lik.method = "REML"
+    )
+  })
+  
+  # Calculate the average values of the model parameters
+  avg_params <- sapply(variogram_fits, function(fit) fit$cov.pars[2])  # Extract rho values
+  
+  # Store the average values of rho and gamma_sq
+  out_damped <- c(mean(avg_params), sqrt(mean(sapply(variogram_fits, function(fit) fit$cov.pars[1]))))
+  
+  sims_damped[i,] <- out_damped
+}
+
+# 5. Obtain distribution, mean, and sd for the parameter estimates of the above simulation
+hist(sims_damped[, 1], main = "Damped Cosine Rho")
+hist(sims_damped[, 2], main = "Damped Cosine Gamma")
+
+mean(sims_damped[, 1])
+mean(sims_damped[, 2])
+sd(sims_damped[, 1])
+sd(sims_damped[, 2])
