@@ -10,6 +10,9 @@
 ## --> install.packages('C:/Users/nioni/Documents/RandomFields_3.3.14.tar.gz',repos=NULL,type='source')
 ## 4. Load the RandomFields library:
 
+#install.packages("C:/Users/moore/Documents/647/Class Code and Data/RandomFieldsUtils_1.2.3.tar.gz",repos=NULL,type='source')
+#install.packages("C:/Users/moore/Documents/647/Class Code and Data/RandomFields_3.3.14.tar.gz",repos=NULL,type='source')
+
 library(RandomFields)
 
 # Define Exponential Damped covariance 
@@ -70,7 +73,7 @@ for(i in c(1:50)){ # nrow(sims1)=M=50, 1<=i<=50 reps
   
   Sigma_grid <- RMdampedcos(lambda=lambda, var=var) # lambda=1/rho; var=gamma^2=2^2=4
   
-  z <- rmvnorm(n = 1, mu = rep(5, n), Sigma = Sigma_grid) # Mean: 5; Sigma: cov(ep_1(s_1),ep_1(s_2)); 
+  z <- rmvnorm(n = 1, mu = rep(5, n), Sigma = RFcovmatrix(Sigma_grid, x=coords)) # Mean: 5; Sigma: cov(ep_1(s_1),ep_1(s_2)); 
   # n = 1 Y(s) output per simulation rep
   
   cov.pars <- c(1, 1, 1) # Initial parameter values
