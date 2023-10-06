@@ -1,0 +1,113 @@
+---
+title: "STAT 647 HW#2 - Part 2"
+author: "Tiffany Chang"
+date: "2023-10-06"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading libraries and custom functions
+
+```{r}
+## Required libraries
+library(fields)
+library(MASS)
+library(Matrix)
+library(RandomFields)
+library(geoR) 
+library(geostatsp)
+
+## Custom functions
+## Note: Comment out *all* example sims in those R files, so that they don't start running when loading the custom 
+## functions below!
+source("ConditionalLikelihoodEdited.R")
+source("Group3_pairwise.R")
+source("Group4_tapered_likelihood.R")
+```
+
+
+## Question 2
+
+a - i) For d = 1, uniformly sample the spatial process over the range [0, 2] and n = 10000.
+
+```{r}
+## Simulations for Model 1 (exponential cov)
+
+## Generate data
+set.seed(42)
+n  <- 10000
+size = 2
+coords <- runif(n,0,size) # Over range [0,size]
+D <- rdist(coords) # Distance matrix
+
+## Define parameters
+rho <- .75
+sigma <- 1
+alpha <- 1 / rho
+nu <- 0.5
+gamma <- 2
+phi <- gamma^2
+phi_exp <- 1 # This is the phi parameter that is fed into the exponential conditional likelihood function and is what 
+# the params is equal to
+
+## Method 1: Conditional Likelihood
+sims1 <- matrix(NA, nrow=50, ncol=1) # Restricting the number of sims, M=50, since my PC cannot handle large sims
+
+## Obtain the estimates and populate sims1
+for(i in c(1:50)){ 
+  set.seed(i)
+  
+  Sigma_grid <- Matern(D, nu = nu, phi = phi_exp) # phi=1 (based on the "group2_conditional_likelihood.Rmd" sample 
+  # simulations)
+  
+  z <- rmvnorm(n = 1, mu = rep(0, n), Sigma = Sigma_grid) # Mean: 5; Sigma: cov(ep_1(s_1),ep_1(s_2)); 
+  # n = 1 Y(s) output per simulation rep
+  
+  cov.pars <- c(phi_exp) # Initial parameter value
+  
+  lower_bound <- 0  # Replace with your desired lower bound
+  upper_bound <- 4  # Replace with your desired upper bound
+
+  ## Given that vecchia_likelihood <- function(params, y, mu, gamma, sigma, D, damped = F)
+  tryCatch ({ # Use tryCatch to skip any iterations which the likelihood function throws an error. Those will be 
+  # recorded as NA in the sims1 matrix.
+  out1 = optim(par = cov.pars, # par=cov.pars=params
+               fn = vecchia_likelihood,
+               
+               ## These are the additional arguments within the "vecchia_likelihood" function
+               y = z, # y=z=Y(s)
+               mu = 5,
+               gamma = gamma, # gamma=2
+               sigma = sigma, # sigma=1
+               D=D,
+               damped=F, # damped=F=exponential cov option
+               ## End of defining additional arguments
+               
+               method = "L-BFGS-B", # Use optim with L-BFGS-B method
+               lower = lower_bound, 
+               upper = upper_bound, 
+               control = list(maxit = 10000,trace = 1)) # Example max iterations
+  
+  sims1[i] = out1$par # Store results
+  print(i)
+  }, error = function(e) {
+    sims1[i] <- c(NA)
+  })
+}
+
+par(mfrow=c(3,1))
+## Obtain distribution, mean, and sd for each param estimate of the above simulation
+hist(sims1[,1], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Phi for Exp, ϕ") # Distribution for phi_exp
+# Not sure why Group 2 would estimate phi instead of rho for exponential covariance...
+print(paste("Mean of Phi for Exp Cov, ϕ: ",mean(sims1[,1], na.rm =TRUE))) # Mean of phi_exp: E(phi_exp_hat)
+print(paste("Bias of Phi for Exp Cov, ϕ: ",mean(sims1[,1], na.rm =TRUE) - phi_exp)) # Empirical bias of phi_exp: 
+# E(phi_exp_hat)-phi_exp
+print(paste("SD of Phi, ϕ: ",sd(sims1[,1], na.rm =TRUE))) # Standard deviation of phi_exp
+
+## Method 2: Pairwise Likelihood
+## To be continued...
+```
+
