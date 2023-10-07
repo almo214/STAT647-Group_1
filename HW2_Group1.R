@@ -19,19 +19,20 @@ library(MASS)
 library(Matrix)
 library(geoR) 
 library(geostatsp)
+library(RandomFields)
 # library(RandomFields) # Library for Exponential damping no longer supported
 
 # Define all Functions ####
-
-# Define Exponential Damped covariance 
+# 
+# # Define Exponential Damped covariance 
 exp_Damped_cov <- function(h, rho, phi) {
-  (phi^2) * exp(-h / rho^2) * cos(h)
-}
-
-# Luis's function, removed nugget
-damped_covariance <- function(D, phi, range) {
-  exp(-D / range) * (1 + D / (phi * range)) * exp(-D / phi)
-}
+   (phi^2) * exp(-h / rho^2) * cos(h)
+ }
+# 
+# # Luis's function, removed nugget
+# damped_covariance <- function(D, phi, range) {
+#   exp(-D / range) * (1 + D / (phi * range)) * exp(-D / phi)
+# }
 
 
 
@@ -69,11 +70,12 @@ likelihood.exp_damp_GMLE <- function(cov.pars) {
   gamma <- cov.pars[1] 
   rho <- cov.pars[2] 
   mu <- cov.pars[3] # Corresponds to Y(s)_hat (estimated mean)
-  z = z - mu # Subtracted the estimated mean from z so that the parameter estimates calculations are 
+  z <- z - mu # Subtracted the estimated mean from z so that the parameter estimates calculations are 
   # accurate when z is centered around close to 0
   
   # Calculate the exponential covariance
-  cov <- exp_Damped_cov(D, rho, phi)
+
+  cov <- exp_Damped_cov(D, rho, gamma)
    # cov <- damped_covariance(D, phi, rho)
   
   # Calculate Cholesky decomposition
@@ -103,7 +105,7 @@ size = 2 # over range [0,size]
 
 # 1-D
 coords <- runif(n,0,size) # Over range [0, size]
-
+coords <- cbind(runif(n,0,size), rep(0,n)) # For REML 1-D, fill second dimension with 0. likfit will not run for 1D data.
 ## For 2-D 
 #coords <- cbind(runif(n,0,size), runif(n,0,size))
 
@@ -226,14 +228,15 @@ sd(sims2[,2], na.rm =TRUE)
 
 ## Generate data
 set.seed(42)
-n  <- 100
+n  <- 1000
 size = 2 # over range [0,size]
 
 # 1-D
-# coords <- runif(n,0,size) # Over range [0, size]
+#coords <- runif(n,0,size) # Over range [0, size]
+#coords <- cbind(runif(n,0,size), rep(0,n)) # For REML 1-D, fill second dimension with 0. likfit will not run for 1D data.
 
-## For 2-D 
-coords = cbind(runif(n,0,size), runif(n,0,size))
+# For 2-D 
+ coords = cbind(runif(n,0,size), runif(n,0,size))
 
 
 
@@ -257,9 +260,9 @@ for(i in c(1:1000)){
  
    # signma_grd <- damped_covariance(D, phi, rho)
 
-  Sigma_grid <- exp_Damped_cov(D,  rho, phi)
+  Sigma_grid <- RMdampedcos(lambda= alpha, var= phi) # lambda=1/rho; var=gamma^2=2^2=4
   
-  z = rmvnorm(n = 1, mu = rep(5,n), Sigma = Sigma_grid) # Model 1 --> Mean: 5; Sigma: 
+  z <- rmvnorm(n = 1, mu = rep(5, n), Sigma = RFcovmatrix(Sigma_grid, x=coords)) # Model 1 --> Mean: 5; Sigma: 
   # cov(ep_1i(s_1),ep_1i(s_2)), n = 1 Y(s) output per simulation rep
  
   cov.pars<-c(1,1,1) # initial parameter values
@@ -288,7 +291,7 @@ for(i in c(1:1000)){
 
 par(mfrow=c(3,1))
 ## Obtain distribution, mean, and sd for each param estimate of the above simulation
-hist(sims1[,1], main ="Histograms GMLE [0, 2]^2, Exponential Damped, n =100", xlab ='sigma') # Distribution of gamma^2
+hist(sims1[,1], main ="Histograms GMLE [0, 2]^2, Exponential Damped, n =1000", xlab ='sigma') # Distribution of gamma^2
 hist(sims1[,2], main='', xlab ='rho') # Distribution of rho
 hist(sims1[,3], main='', xlab ='mean') # UPDATE: Distribution of Y(s)
 mean(sims1[,1], na.rm =TRUE) - 4 # Empirical bias of gamma^2: E(gamma^2_hat)-gamma^2 
@@ -303,12 +306,10 @@ sd(sims1[,3], na.rm =TRUE) # Standard deviation of Y(s)
 sims2 <- matrix(NA, nrow=5, ncol=2)
 
 for(i in c(1:5)){ 
+
   
-  # signma_grd <- damped_covariance(D, phi, rho)
-  
-  Sigma_grid <- exp_Damped_cov(D,  rho, phi)
-  
-  z <- rmvnorm(n = n, mean = rep(5, n), sigma = Sigma_grid) # Using Exponential cov. function
+  Sigma_grid <- RMdampedcos(lambda= alpha, var= phi)
+  z <- rmvnorm(n = n, mean = rep(5, n), Sigma = RFcovmatrix(Sigma_grid, x=coords))
   # Generate the observed data 'z' using multivariate normal distribution
   # We are setting the mean = 0 since REML circumvents estimating the mean
   
