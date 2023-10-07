@@ -44,26 +44,29 @@ phi <- gamma^2
 n  <- 10000
 size <- 2
 
-## Simulations for Model 1 (exponential cov)
-
 ## Generate data
 set.seed(42)
 coords <- runif(n,0,size) # Over range [0,size]
 D <- rdist(coords) # Distance matrix
 
+#################################################################################################################
+
+## Simulations for Model 1 (exponential cov)
+
 ## Method 1: Conditional Likelihood
-sims1 <- matrix(NA, nrow=400, ncol=1) # Restricting the number of sims, M=50, since my PC cannot handle large sims
+sims1 <- matrix(NA, nrow=1, ncol=1) # Restricting the number of sims, M=1, since my PC cannot handle large sims
+## Note: M is supposed to be 400!
 
 ## Obtain the estimates and populate sims1
-for(i in c(1:400)){ # M=400
+for(i in c(1:1)){ # M=1
   set.seed(i)
   
   Sigma_grid <- Matern(D, alpha = alpha, nu = nu, phi = phi)
   
-  z <- rmvnorm(n = 1, mu = rep(0, n), Sigma = Sigma_grid) # Mean: 5; Sigma: cov(ep_1(s_1),ep_1(s_2)); 
+  z <- rmvnorm(n = 1, mu = rep(5, n), Sigma = Sigma_grid) # Mean: 5; Sigma: cov(ep_1(s_1),ep_1(s_2)); 
   # n = 1 Y(s) output per simulation rep
   
-  cov.pars <- c(phi_exp) # Initial parameter value
+  cov.pars <- c(1) # Initial parameter value
   
   lower_bound <- 0  # Replace with your desired lower bound
   upper_bound <- 4  # Replace with your desired upper bound
@@ -79,8 +82,8 @@ for(i in c(1:400)){ # M=400
                mu = 5,
                gamma = gamma, # gamma=2
                sigma = sigma, # sigma=1
-               D=D,
-               damped=F, # damped=F=exponential cov option
+               D = D,
+               damped = F, # damped=F=exponential cov option
                ## End of defining additional arguments
                
                method = "L-BFGS-B", # Use optim with L-BFGS-B method
@@ -95,16 +98,85 @@ for(i in c(1:400)){ # M=400
   })
 }
 
-par(mfrow=c(3,1))
 ## Obtain distribution, mean, and sd for each param estimate of the above simulation
-hist(sims1[,1], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Phi for Exp, ϕ") # Distribution for phi_exp
-# Not sure why Group 2 would estimate phi instead of rho for exponential covariance...
-print(paste("Mean of Phi for Exp Cov, ϕ: ",mean(sims1[,1], na.rm =TRUE))) # Mean of phi_exp: E(phi_exp_hat)
-print(paste("Bias of Phi for Exp Cov, ϕ: ",mean(sims1[,1], na.rm =TRUE) - phi_exp)) # Empirical bias of phi_exp: 
-# E(phi_exp_hat)-phi_exp
-print(paste("SD of Phi, ϕ: ",sd(sims1[,1], na.rm =TRUE))) # Standard deviation of phi_exp
+par(mfrow=c(3,1))
+hist(sims1[,1], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Rho for Exp")
+print(paste("Mean of Rho for Exp Cov: ",mean(sims1[,1], na.rm = TRUE)))
+print(paste("Bias of Rho for Exp Cov: ",mean(sims1[,1], na.rm = TRUE) - .75))
+print(paste("SD of Rho for Exp Cov: ",sd(sims1[,1], na.rm =TRUE)))
 
 ## Method 2: Pairwise Likelihood
+
+## Define additional parameters specific to Pairwise Likelihood
+n_reduced <- 10 # Restrict sample size to n=10, since my PC might crash with large n
+p <- 3 # Number of beta parameters
+
+sims2 <- matrix(NA, nrow=1, ncol=5)
+
+## Generate data with Matern covariance 
+## Y=beta'X+e+epsilon=z=Y(s)
+## E(e)=0, cov(e)~Matern(D, alpha=1/rho, nu=0.5, phi=4.0), where rho=.75
+## epsilon~N(0,sigma^2), where sigma^2=1
+
+## Obtain the estimates and populate sims1
+for(i in c(1:1)){ # M=1
+  beta0 = t(c(1,4,3)) # Not sure why they set the beta parameters to these values specifically...
+  
+  set.seed(i)
+  
+  Sigma_grid <- Matern(D, alpha = alpha, nu = nu, phi = phi)
+  
+  X <- matrix(1, nrow = p, ncol = n_reduced) + matrix(rnorm(p*n_reduced, 0, 1), nrow = p, ncol = n_reduced)
+  Y <- t(beta0%*%X + rmvnorm(n = 1, mu = 5, Sigma = Sigma_grid) + rnorm(n_reduced, 0, sigma^2)) # Where rmvnorm(n
+  # = 1, mu = 0, Sigma = Sigma_grid) is our "z" data
+  
+  ## Initial parameter values
+  beta_initial = t(rep(1,p))
+  sigma2_initial = 1 # Initial value of sigma^2=1
+  alpha_initial = 1
+  param=c(beta_initial, sigma_initial, alpha_initial)
+  
+  tryCatch ({
+  out1 <- nlm(likelihood.pairwise, param, stepmax=5, print.level=2, gradtol=10^(-10))
+  
+  sims2[i,] <- out1$est
+  
+  ## Convert alpha to rho
+  sims2[i,5] <- 1/sims2[i,5]
+  
+  print(i)
+  }, error = function(e) {
+    sims2[i,] <- c(NA, NA, NA, NA, NA)
+  })
+}
+
+## Obtain distribution, mean, and sd for each param estimate of the above simulation
+par(mfrow=c(3,1))
+hist(sims2[,1], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Beta_1 for Exp")
+hist(sims2[,2], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Beta_2 for Exp")
+hist(sims2[,3], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Beta_3 for Exp")
+hist(sims2[,4], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Sigma^2 for Exp")
+hist(sims2[,5], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Rho for Exp")
+
+print(paste("Mean of Beta_1 for Exp Cov: ",mean(sims2[,1], na.rm = TRUE)))
+print(paste("Mean of Beta_2 for Exp Cov: ",mean(sims2[,2], na.rm = TRUE)))
+print(paste("Mean of Beta_3 for Exp Cov: ",mean(sims2[,3], na.rm = TRUE)))
+print(paste("Mean of Sigma^2 for Exp Cov: ",mean(sims2[,4], na.rm = TRUE)))
+print(paste("Mean of Rho for Exp Cov: ",mean(sims2[,5], na.rm = TRUE)))
+
+print(paste("Bias of Beta_1 for Exp Cov: ",mean(sims2[,1], na.rm = TRUE) - 1))
+print(paste("Bias of Beta_2 for Exp Cov: ",mean(sims2[,2], na.rm = TRUE) - 4))
+print(paste("Bias of Beta_3 for Exp Cov: ",mean(sims2[,3], na.rm = TRUE) - 3))
+print(paste("Bias of Sigma^2 for Exp Cov: ",mean(sims2[,4], na.rm = TRUE) - 1))
+print(paste("Bias of Rho for Exp Cov: ",mean(sims2[,5], na.rm = TRUE) - .75))
+
+print(paste("SD of Beta_1 for Exp Cov: ",sd(sims2[,1], na.rm =TRUE)))
+print(paste("SD of Beta_2 for Exp Cov: ",sd(sims2[,2], na.rm =TRUE)))
+print(paste("SD of Beta_3 for Exp Cov: ",sd(sims2[,3], na.rm =TRUE)))
+print(paste("SD of Sigma^2 for Exp Cov: ",sd(sims2[,4], na.rm =TRUE)))
+print(paste("SD of Rho for Exp Cov: ",sd(sims2[,5], na.rm =TRUE)))
+
+## Method 3: Tapered Likelihood
 ## To be continued...
 ```
 
