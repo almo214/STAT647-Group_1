@@ -23,10 +23,10 @@ library(MASS)
 
 #### function for pairwise likelihood ####
 
-likelihood.pairwise <- function(param){ 
+likelihood.pairwise <- function(param, n){ 
   
   beta = param[1:p]
-  s2=param[p+1]
+  s2 = param[p+1]
   theta = param[p+2]
   #nu = param[p+3]
   #phi = param[p+4]
