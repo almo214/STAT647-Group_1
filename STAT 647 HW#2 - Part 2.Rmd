@@ -41,7 +41,7 @@ alpha <- 1 / rho
 nu <- 0.5
 gamma <- 2
 phi <- gamma^2
-n  <- 10000
+n  <- 1000 # Restrict sample size to n=10, since my PC might crash with large n
 size <- 2
 
 ## Generate data
@@ -54,11 +54,11 @@ D <- rdist(coords) # Distance matrix
 ## Simulations for Model 1 (exponential cov)
 
 ## Method 1: Conditional Likelihood
-sims1 <- matrix(NA, nrow=1, ncol=1) # Restricting the number of sims, M=1, since my PC cannot handle large sims
+sims1 <- matrix(NA, nrow=5, ncol=1) # Restricting the number of sims, M=5, since my PC cannot handle large sims
 ## Note: M is supposed to be 400!
 
 ## Obtain the estimates and populate sims1
-for(i in c(1:1)){ # M=1
+for(i in c(1:5)){ # M=5
   set.seed(i)
   
   Sigma_grid <- Matern(D, alpha = alpha, nu = nu, phi = phi)
@@ -100,18 +100,20 @@ for(i in c(1:1)){ # M=1
 
 ## Obtain distribution, mean, and sd for each param estimate of the above simulation
 par(mfrow=c(3,1))
-hist(sims1[,1], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Rho for Exp")
+hist(sims1[,1], main ="Histogram 1-D [0, 2], Exponential, n=1000", xlab ="Rho for Exp")
 print(paste("Mean of Rho for Exp Cov: ",mean(sims1[,1], na.rm = TRUE)))
 print(paste("Bias of Rho for Exp Cov: ",mean(sims1[,1], na.rm = TRUE) - .75))
 print(paste("SD of Rho for Exp Cov: ",sd(sims1[,1], na.rm =TRUE)))
 
+
 ## Method 2: Pairwise Likelihood
 
-## Define additional parameters specific to Pairwise Likelihood
-n_reduced <- 10 # Restrict sample size to n=10, since my PC might crash with large n
+## Define additional/modify parameters specific to Pairwise Likelihood
+n <- 10 # Restrict sample size to n=10
 p <- 3 # Number of beta parameters
-coords_reduced <- runif(n_reduced,0,size) # Over range [0,size]
-D_reduced <- rdist(coords_reduced) # Distance matrix
+set.seed(42)
+coords <- runif(n,0,size) 
+D <- rdist(coords) 
 
 sims2 <- matrix(NA, nrow=5, ncol=5)
 
@@ -120,16 +122,16 @@ sims2 <- matrix(NA, nrow=5, ncol=5)
 ## E(e)=0, cov(e)~Matern(D, alpha=1/rho, nu=0.5, phi=4.0), where rho=.75
 ## epsilon~N(0,sigma^2), where sigma^2=1
 
-## Obtain the estimates and populate sims1
-for(i in c(1:5)){ # M=1
+## Obtain the estimates and populate sims2
+for(i in c(1:5)){ # M=5
   beta0 = t(c(1,4,3)) # Not sure why they set the beta parameters to these values specifically...
   
   set.seed(i)
   
-  Sigma_grid <- Matern(D_reduced, alpha = alpha, nu = nu, phi = phi)
+  Sigma_grid <- Matern(D, alpha = alpha, nu = nu, phi = phi)
   
-  X <- matrix(1, nrow = p, ncol = n_reduced) + matrix(rnorm(p*n_reduced, 0, 1), nrow = p, ncol = n_reduced)
-  Y <- t(beta0%*%X + rmvnorm(n = 1, mu = 5, Sigma = Sigma_grid) + rnorm(n_reduced, 0, sigma^2)) # Where rmvnorm(n
+  X <- matrix(1, nrow = p, ncol = n) + matrix(rnorm(p*n, 0, 1), nrow = p, ncol = n)
+  Y <- t(beta0%*%X + rmvnorm(n = 1, mu = 5, Sigma = Sigma_grid) + rnorm(n, 0, sigma^2)) # Where rmvnorm(n
   # = 1, mu = 0, Sigma = Sigma_grid) is our "z" data
   
   ## Initial parameter values
@@ -139,7 +141,7 @@ for(i in c(1:5)){ # M=1
   param=c(beta_initial, sigma2_initial, alpha_initial)
   
   tryCatch ({
-  out1 <- nlm(likelihood.pairwise, param, n = n_reduced, stepmax=5, print.level=2, gradtol=10^(-10)) # Note: I
+  out1 <- nlm(likelihood.pairwise, param, n = n, stepmax=5, print.level=2, gradtol=10^(-10)) # Note: I
   # edited group 3's Pairwise Likelihood function to include the parameter, n, to specify the sample size of the 
   # simulated data.
   
@@ -154,31 +156,93 @@ for(i in c(1:5)){ # M=1
   })
 }
 
+## Only keep data for rho estimates
+sims2 <- sims2[,5]
+sims2 <- matrix(sims2, nrow=5, ncol=1)
+
 ## Obtain distribution, mean, and sd for each param estimate of the above simulation
 par(mfrow=c(3,1))
-hist(sims2[,1], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Beta_1 for Exp")
-hist(sims2[,2], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Beta_2 for Exp")
-hist(sims2[,3], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Beta_3 for Exp")
-hist(sims2[,4], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Sigma^2 for Exp")
-hist(sims2[,5], main ="Histogram 1-D [0, 2], Exponential, n=10000", xlab ="Rho for Exp")
+# hist(sims2[,1], main ="Histogram 1-D [0, 2], Exponential, n=10", xlab ="Beta_1 for Exp")
+# hist(sims2[,2], main ="Histogram 1-D [0, 2], Exponential, n=10", xlab ="Beta_2 for Exp")
+# hist(sims2[,3], main ="Histogram 1-D [0, 2], Exponential, n=10", xlab ="Beta_3 for Exp")
+# hist(sims2[,4], main ="Histogram 1-D [0, 2], Exponential, n=10", xlab ="Sigma^2 for Exp")
+hist(sims2[,1], main ="Histogram 1-D [0, 2], Exponential, n=10", xlab ="Rho for Exp")
 
-print(paste("Mean of Beta_1 for Exp Cov: ",mean(sims2[,1], na.rm = TRUE)))
-print(paste("Mean of Beta_2 for Exp Cov: ",mean(sims2[,2], na.rm = TRUE)))
-print(paste("Mean of Beta_3 for Exp Cov: ",mean(sims2[,3], na.rm = TRUE)))
-print(paste("Mean of Sigma^2 for Exp Cov: ",mean(sims2[,4], na.rm = TRUE)))
-print(paste("Mean of Rho for Exp Cov: ",mean(sims2[,5], na.rm = TRUE)))
+# print(paste("Mean of Beta_1 for Exp Cov: ",mean(sims2[,1], na.rm = TRUE)))
+# print(paste("Mean of Beta_2 for Exp Cov: ",mean(sims2[,2], na.rm = TRUE)))
+# print(paste("Mean of Beta_3 for Exp Cov: ",mean(sims2[,3], na.rm = TRUE)))
+# print(paste("Mean of Sigma^2 for Exp Cov: ",mean(sims2[,4], na.rm = TRUE)))
+print(paste("Mean of Rho for Exp Cov: ",mean(sims2[,1], na.rm = TRUE)))
 
-print(paste("Bias of Beta_1 for Exp Cov: ",mean(sims2[,1], na.rm = TRUE) - 1))
-print(paste("Bias of Beta_2 for Exp Cov: ",mean(sims2[,2], na.rm = TRUE) - 4))
-print(paste("Bias of Beta_3 for Exp Cov: ",mean(sims2[,3], na.rm = TRUE) - 3))
-print(paste("Bias of Sigma^2 for Exp Cov: ",mean(sims2[,4], na.rm = TRUE) - 1))
-print(paste("Bias of Rho for Exp Cov: ",mean(sims2[,5], na.rm = TRUE) - .75))
+# print(paste("Bias of Beta_1 for Exp Cov: ",mean(sims2[,1], na.rm = TRUE) - 1))
+# print(paste("Bias of Beta_2 for Exp Cov: ",mean(sims2[,2], na.rm = TRUE) - 4))
+# print(paste("Bias of Beta_3 for Exp Cov: ",mean(sims2[,3], na.rm = TRUE) - 3))
+# print(paste("Bias of Sigma^2 for Exp Cov: ",mean(sims2[,4], na.rm = TRUE) - 1))
+print(paste("Bias of Rho for Exp Cov: ",mean(sims2[,1], na.rm = TRUE) - .75))
 
-print(paste("SD of Beta_1 for Exp Cov: ",sd(sims2[,1], na.rm =TRUE)))
-print(paste("SD of Beta_2 for Exp Cov: ",sd(sims2[,2], na.rm =TRUE)))
-print(paste("SD of Beta_3 for Exp Cov: ",sd(sims2[,3], na.rm =TRUE)))
-print(paste("SD of Sigma^2 for Exp Cov: ",sd(sims2[,4], na.rm =TRUE)))
-print(paste("SD of Rho for Exp Cov: ",sd(sims2[,5], na.rm =TRUE)))
+# print(paste("SD of Beta_1 for Exp Cov: ",sd(sims2[,1], na.rm =TRUE)))
+# print(paste("SD of Beta_2 for Exp Cov: ",sd(sims2[,2], na.rm =TRUE)))
+# print(paste("SD of Beta_3 for Exp Cov: ",sd(sims2[,3], na.rm =TRUE)))
+# print(paste("SD of Sigma^2 for Exp Cov: ",sd(sims2[,4], na.rm =TRUE)))
+print(paste("SD of Rho for Exp Cov: ",sd(sims2[,1], na.rm =TRUE)))
+
 
 ## Method 3: Tapered Likelihood
-## To be continued...
+
+## Define additional/modify variables specific to Tapered Likelihood
+n <- 10 # Restrict sample size to n=10
+set.seed(42)
+coords <- runif(n,0,size) 
+D <- rdist(coords)
+
+sims3 <- matrix(NA, nrow=5, ncol=3)
+
+## Obtain the estimates and populate sims3
+for(i in c(1:5)){ # M=5
+  set.seed(i)
+  
+  taper_matrix <- wendland_cov(D, support = 1, smoothness = 2)
+  Sigma_grid <- Matern(D, alpha = alpha, nu = nu, phi = phi)
+  Sigma_tapered <- Sigma_grid * taper_matrix
+  
+  z <- rmvnorm(n = 1, mu = rep(5, n), Sigma = Sigma_tapered)
+  
+  cov.pars <- c(1, 1, 1) # Initial parameter values
+  
+  tryCatch ({
+  out1 <- nlm(likelihood.matern, cov.pars, stepmax=5, print.level=2, gradtol=10^(-10))
+  
+  out2 <- (out1$est)**2
+  
+  sims3[i,] <- out2
+  
+  sims3[i,3] <- sqrt(sims3[i,3])
+  
+  print(i)
+  }, error = function(e) {
+    sims3[i,] <- c(NA, NA, NA)
+  })
+}
+
+## Only keep data for rho estimates
+sims3 <- sims3[,2]
+sims3 <- matrix(sims3, nrow=5, ncol=1)
+
+## Obtain distribution, mean, and sd for each param estimate of the above simulation
+par(mfrow=c(3,1))
+# hist(sims3[,1], main ="Histogram 1-D [0, 2], Exponential, n=10", xlab ="Gamma for Exp")
+hist(sims3[,1], main ="Histogram 1-D [0, 2], Exponential, n=10", xlab ="Rho for Exp")
+# hist(sims3[,3], main ="Histogram 1-D [0, 2], Exponential, n=10", xlab ="Y(s) for Exp")
+
+# print(paste("Mean of Gamma for Exp Cov: ",mean(sims3[,1], na.rm = TRUE)))
+print(paste("Mean of Rho for Exp Cov: ",mean(sims3[,1], na.rm = TRUE)))
+# print(paste("Mean of Y(s) for Exp Cov: ",mean(sims3[,3], na.rm = TRUE)))
+
+# print(paste("Bias of Gamma for Exp Cov: ",mean(sims3[,1], na.rm = TRUE) - 4))
+print(paste("Bias of Rho for Exp Cov: ",mean(sims3[,1], na.rm = TRUE) - .75))
+# print(paste("Bias of Y(s) for Exp Cov: ",mean(sims3[,3], na.rm = TRUE) - 5))
+
+# print(paste("SD of Gamma for Exp Cov: ",sd(sims3[,1], na.rm =TRUE)))
+print(paste("SD of Rho for Exp Cov: ",sd(sims3[,1], na.rm =TRUE)))
+# print(paste("SD of Y(s) for Exp Cov: ",sd(sims3[,3], na.rm =TRUE)))
+```
