@@ -136,3 +136,5 @@ likelihood.pairwise <- function(param, n){
 # sd(simulation[,4])
 # sd(simulation[,5])
 
+
+
