@@ -30,9 +30,13 @@ marglik = function(y, gam, sigma, mu){
 ### Given the parameters μ=5, σ^2 =1 and estimating phi :
 vecchia_likelihood <- function(params, y, mu, gamma, sigma, D, damped = F) {
   # sigma = 1 #initialed equal to 1
-  rho = params
+  phi = params  # phi (params[2]) represents the practical range of the covariance function. 
+  # It is the distance at which the correlation between two points drops to a specific threshold.
+  # For instance, if phi is set to 2, it implies that the correlation between two points 
+  # separated by a distance of 2 (or phi=2) is significantly reduced, often close to 0. 
+  # UPDATE: I think phi, in this context, means rho.
   # UPDATE: I think y means Y(s), which is z <- rmvnorm(n = 1, mu = rep(5, n), Sigma = Sigma_grid) in our simulations.
-  # Please confirm if the above interpretation is correct.
+  # Please confirm if any of the 2 interpretations I made are correct.
   # mu = 5 #  μ=5
   # gamma = 2
   if(damped){
