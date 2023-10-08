@@ -30,18 +30,21 @@ wendland_cov <- function(d, support, smoothness) {
 # Generate multivariate normal data using the tapered covariance matrix
 # z = rmvnorm(1, mu = rep(0, n), Sigma = Sigma_tapered)
 # Define the likelihood function
-# likelihood.matern <- function(cov.pars){ 
-#   sigma = cov.pars[1]
-#   Rg = cov.pars[2]    
-#   cov = (sigma^2) * exp(-D/(Rg^2))
-#   tapered_cov = cov * taper_matrix
-#   temp <- chol(tapered_cov)
-#   logpart <- 2 * sum(log(diag(temp)))
-#   step1 <- forwardsolve(t(temp), t(z))
-#   step2 <- backsolve(temp, step1)
-#   exponentpart <- z %*% step2
-#   return((logpart + exponentpart)/2)
-# }
+likelihood.matern <- function(cov.pars){ 
+  sigma = cov.pars[1]
+  Rg = cov.pars[2]   
+  mu <- cov.pars[3] # Corresponds to Y(s)_hat (estimated mean)
+  z = z - mu # Subtracted the estimated mean from z so that the parameter estimates calculations are 
+  # accurate when z is centered around close to 0
+  cov = (sigma^2) * exp(-D/(Rg^2)) 
+  tapered_cov = cov * taper_matrix
+  temp <- chol(tapered_cov)
+  logpart <- 2 * sum(log(diag(temp)))
+  step1 <- forwardsolve(t(temp), t(z))
+  step2 <- backsolve(temp, step1)
+  exponentpart <- z %*% step2
+  return((logpart + exponentpart)/2)
+}
 # Perform the optimization
 # cov.pars = c(1,1) 
 # nlm(likelihood.matern, cov.pars, stepmax=5, print.level=2, gradtol=10^(-10))
