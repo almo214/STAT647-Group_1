@@ -349,3 +349,192 @@ mean(sqrt(sims2[,1]), na.rm =TRUE) - 4
 mean(sims2[,2], na.rm =TRUE) - .75
 sd(sqrt(sims2[,1]), na.rm =TRUE)
 sd(sims2[,2], na.rm =TRUE)
+
+
+
+#### Parallel REML ####
+library(future)
+library(doFuture)
+library(doParallel)
+# library(RandomFields) # Library for Exponential damping no longer supported
+# Register threads for parallel processing
+registerDoFuture()
+plan(multicore, workers = 10)
+
+# Simulations for Model 1 (exponential cov) ####
+## Generate data
+set.seed(42)
+n  <- 1000
+size =  10 # over range [0,size]
+
+# 1-D
+#coords <- runif(n,0,size) # Over range [0, size]
+
+# For 2-D 
+coords <- cbind(runif(n,0,size),runif(n,0,size))
+#coords <- cbind(runif(n,0,size), rep(0,n))
+
+D <- rdist(coords) # distance matrix
+
+rho <- .75
+alpha <- 1 / rho
+nu <- 0.5
+phi <- 4.0
+
+
+## Method 2: REML ####
+
+
+sims2 <- matrix(NA, nrow=10, ncol=2)
+# Adapt the for loop to a function. Define all functions inside this using their package names::
+parallel <- function(i){ 
+  set.seed(i*2)
+  Sigma_grid <-  fields::Matern(D, alpha = alpha, nu = nu, phi = phi) # Generate the Matern covariance matrix, 
+  # Sigma_grid
+  
+  z <- rmvnorm(n = n, mean = rep(5, n), sigma = Sigma_grid) # Using Exponential cov. function
+  # Generate the observed data 'z' using multivariate normal distribution
+  
+  # Use tryCatch to skip any iterations which the likelihood function throws an error. Those will be recorded
+  # as NA in the sims1 matrix.
+  tryCatch ({
+    # Fit separate Matern models for each column of 'z' using REML
+    variogram_fits <- lapply(1:ncol(z), function(col) {
+      likfit(
+        geodata = list(coords = as.matrix(coords), data = z[,col]), # Use each column of 'z'
+        ini.cov.pars = c(1, .5), 
+        fix.nugget = TRUE, # Assuming a fixed nugget
+        lik.method = "REML", # Use REML estimation
+        messages =  FALSE
+      )
+    })
+    
+    # Calculate the average values of the model parameters
+    avg_params <- sapply(variogram_fits, function(fit) {
+      cov.pars <- fit$cov.pars
+    })
+    
+    # Store the average values of the model parameters
+    out2 <- rowMeans(avg_params) # Average Model Parameters for Exponential Cov
+    return(out2)
+  }, error = function(e) {
+    return(c(NA, NA))
+  })
+}
+
+
+# Define the number of threads to use
+future::plan("multisession", workers = 10)
+start<- Sys.time()
+#Portion that actually iterates through the loop:
+simulation_parallel <- foreach(i = 1:10, .combine = rbind) %dopar% {
+  parallel(i)
+}
+
+end<- Sys.time()
+(runtime<-abs(end-start))
+
+# A thread tended to have an anomaly of estimating parameters >30. This was less than 10% of the time
+# Include this line just to discard these outliers
+sims5 <- simulation_parallel[simulation_parallel[, 1] <= 10, ]
+
+
+par(mfrow=c(2,1))
+## 5. Obtain distribution, mean, and sd for each param estimate of the above simulation
+hist(sims5[,1], main ="Histograms REML [0, 10]^2, Exponential, n =1000", xlab ='sigma')
+hist(sims5[,2], main='', xlab ='rho')
+mean(sims5[,1], na.rm =TRUE) - 4
+mean(sims5[,2], na.rm =TRUE) - .75
+sd(sims5[,1], na.rm =TRUE)
+sd(sims5[,2], na.rm =TRUE)
+
+
+
+
+
+
+
+#### Tapered Likelihood ####
+
+# Current configuration for Exp Damped.
+wendland_cov <- function(d, support, smoothness) {
+  r <- d / support
+  cov <- (1 - r) ^ (smoothness + 1) * (1 + (smoothness + 1) * r) * (r < 1)
+  return(cov)
+}
+exp_Damped_cov <- function(h, rho, phi) {
+  (phi^2) * exp(-h / rho^2) * cos(h)
+}
+
+# Define the likelihood function
+likelihood.matern <- function(cov.pars){ 
+  sigma = cov.pars[1]
+  Rg = cov.pars[2]   
+  mu <- cov.pars[3] # Corresponds to Y(s)_hat (estimated mean)
+  z = z - mu # Subtracted the estimated mean from z so that the parameter estimates calculations are 
+  # accurate when z is centered around close to 0
+  #cov = (sigma^2) * exp(-D/(Rg^2)) 
+  cov <- (sigma^2) * exp(-D / Rg^2) * cos(D)
+  tapered_cov = cov * taper_matrix
+  temp <- chol(tapered_cov)
+  logpart <- 2 * sum(log(diag(temp)))
+  step1 <- forwardsolve(t(temp), t(z))
+  step2 <- backsolve(temp, step1)
+  exponentpart <- z %*% step2
+  return((logpart + exponentpart)/2)
+}
+
+
+## Method 3: Tapered Likelihood
+
+## Define additional/modify variables specific to Tapered Likelihood
+n <- 1000 # Restrict sample size to n=10
+set.seed(42)
+size=2
+#coords <- runif(n,0,size) 
+coords<-cbind(runif(n,0,size),runif(n,0,size))
+D <- rdist(coords)
+
+sims3 <- matrix(NA, nrow=100, ncol=3)
+start<-Sys.time()
+## Obtain the estimates and populate sims3
+for(i in c(1:100)){ # M=5
+  set.seed(i)
+  
+  taper_matrix <- wendland_cov(D, support = 1, smoothness = 2)
+  Sig <- RMdampedcos(lambda= alpha, var= phi)
+  Sigma_grid <- RFcovmatrix(Sig, x=coords)
+  #Sigma_grid <- Matern(D, alpha = alpha, nu = nu, phi = phi)
+  Sigma_tapered <- Sigma_grid * taper_matrix
+  
+  z <- rmvnorm(n = 1, mu = rep(5, n), Sigma = Sigma_tapered)
+  
+  cov.pars <- c(1, 1, 1) # Initial parameter values
+  
+  tryCatch ({
+    out1 <- nlm(likelihood.matern, cov.pars, stepmax=5, print.level=2, gradtol=10^(-10))
+    
+    out2 <- (out1$est)**2
+    
+    sims3[i,] <- out2
+    
+    sims3[i,3] <- sqrt(sims3[i,3])
+    
+    print(i)
+  }, error = function(e) {
+    sims3[i,] <- c(NA, NA, NA)
+  })
+}
+end <- Sys.time()
+(runtime<-abs(end-start))
+
+
+## Obtain distribution, mean, and sd for each param estimate of the above simulation
+par(mfrow=c(3,1))
+hist(sims3[,2], main ="Histogram 1-D [0, 2], Exponential, n=10", xlab ="Rho for Exp")
+print(paste("Mean of Rho for Exp Cov: ",mean(sims3[,2], na.rm = TRUE)))
+print(paste("Bias of Rho for Exp Cov: ",mean(sims3[,2], na.rm = TRUE) - .75))
+print(paste("SD of Rho for Exp Cov: ",sd(sims3[,2], na.rm =TRUE)))
+
+
+
