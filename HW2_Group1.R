@@ -536,5 +536,80 @@ print(paste("Mean of Rho for Exp Cov: ",mean(sims3[,2], na.rm = TRUE)))
 print(paste("Bias of Rho for Exp Cov: ",mean(sims3[,2], na.rm = TRUE) - .75))
 print(paste("SD of Rho for Exp Cov: ",sd(sims3[,2], na.rm =TRUE)))
 
+#################################################################################################################
 
+b - ii) For d = 2, uniformly sample the spatial process over the range [0,10]^2 and n = 10000
+
+```{r}
+## Define parameters
+rho <- .75
+sigma <- 1 # sigma=sigma^2=1
+alpha <- 1 / rho
+nu <- 0.5
+gamma <- 2
+phi <- gamma^2
+n  <- 10 # Restrict sample size to n=10, since my PC might crash with large n
+size <- 10
+
+## Generate data
+set.seed(42)
+coords <- cbind(runif(n,0,size), runif(n,0,size)) # Over range [0,size]
+D <- rdist(coords) # Distance matrix
+
+#################################################################################################################
+
+## Simulations for Model 1 (exponential cov)
+
+## Method 1: Conditional Likelihood
+sims4 <- matrix(NA, nrow=5, ncol=1) # Restricting the number of sims, M=5, since my PC cannot handle large sims
+## Note: M is supposed to be 400!
+
+## Obtain the estimates and populate sims1
+for(i in c(1:5)){ # M=5
+  set.seed(i)
+  
+  Sigma_grid <- RMdampedcos(lambda = alpha, var = phi)
+  
+  z <- rmvnorm(n = 1, mu = rep(5, n), Sigma = RFcovmatrix(Sigma_grid, x = coords)) # Mean: 5; Sigma: cov(ep_1(s_1),ep_1(s_2)); 
+  # n = 1 Y(s) output per simulation rep
+  
+  cov.pars <- c(1) # Initial parameter value
+  
+  lower_bound <- 0  # Replace with your desired lower bound
+  upper_bound <- 4  # Replace with your desired upper bound
+
+  ## Given that vecchia_likelihood <- function(params, y, mu, gamma, sigma, D, damped = F)
+  tryCatch ({ # Use tryCatch to skip any iterations which the likelihood function throws an error. Those will be 
+  # recorded as NA in the sims1 matrix.
+  out1 = optim(par = cov.pars, # par=cov.pars=params
+               fn = vecchia_likelihood,
+               
+               ## These are the additional arguments within the "vecchia_likelihood" function
+               y = z, # y=z=Y(s)
+               mu = 5,
+               gamma = gamma, # gamma=2
+               sigma = sigma, # sigma=1
+               D = D,
+               damped = T, # damped=F=exponential cov option
+               ## End of defining additional arguments
+               
+               method = "L-BFGS-B", # Use optim with L-BFGS-B method
+               lower = lower_bound, 
+               upper = upper_bound, 
+               control = list(maxit = 10000,trace = 1)) # Example max iterations
+  
+  sims4[i] = out1$par # Store results
+  print(i)
+  }, error = function(e) {
+    sims4[i] <- c(NA)
+  })
+}
+
+## Obtain distribution, mean, and sd for each param estimate of the above simulation
+par(mfrow=c(3,1))
+hist(sims4[,1], main ="Histogram 2-D [0, 10], Exponential, n=10", xlab ="Rho for Exp")
+print(paste("Mean of Rho for Exp Cov: ",mean(sims4[,1], na.rm = TRUE)))
+print(paste("Bias of Rho for Exp Cov: ",mean(sims4[,1], na.rm = TRUE) - .75))
+print(paste("SD of Rho for Exp Cov: ",sd(sims4[,1], na.rm =TRUE)))
+```
 
