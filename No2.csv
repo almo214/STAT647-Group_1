@@ -1,0 +1,68 @@
+Date,Source,Site ID,POC,nval,UNITS,DAILY_AQI_VALUE,Site Name,DAILY_OBS_COUNT,PERCENT_COMPLETE,AQS_PARAMETER_CODE,AQS_PARAMETER_DESC,CBSA_CODE,CBSA_NAME,STATE_CODE,STATE,COUNTY_CODE,COUNTY,nx,ny
+8/1/2022,AQS,480271047,1,3.2,ppb,3,Killeen Skylark Field,24,100,42602,Nitrogen dioxide (NO2),28660,"Killeen-Temple, TX",48,Texas,27,Bell,31.088002,-97.679734
+8/1/2022,AQS,480290052,2,2.4,ppb,2,Camp Bullis,24,100,42602,Nitrogen dioxide (NO2),41700,"San Antonio-New Braunfels, TX",48,Texas,29,Bexar,29.632058,-98.564936
+8/1/2022,AQS,480290059,1,8.2,ppb,8,Calaveras Lake,24,100,42602,Nitrogen dioxide (NO2),41700,"San Antonio-New Braunfels, TX",48,Texas,29,Bexar,29.275381,-98.311692
+8/1/2022,AQS,480291069,1,12,ppb,11,San Antonio Interstate 35,19,79,42602,Nitrogen dioxide (NO2),41700,"San Antonio-New Braunfels, TX",48,Texas,29,Bexar,29.529432,-98.391403
+8/1/2022,AQS,480391004,1,15.4,ppb,14,Manvel Croix Park,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,39,Brazoria,29.520443,-95.392509
+8/1/2022,AQS,480391016,1,3.6,ppb,3,Lake Jackson,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,39,Brazoria,29.043759,-95.472946
+8/1/2022,AQS,481130069,4,14.4,ppb,13,Dallas Hinton,24,100,42602,Nitrogen dioxide (NO2),19100,"Dallas-Fort Worth-Arlington, TX",48,Texas,113,Dallas,32.820061,-96.860117
+8/1/2022,AQS,481210034,1,9.6,ppb,8,Denton Airport South,24,100,42602,Nitrogen dioxide (NO2),19100,"Dallas-Fort Worth-Arlington, TX",48,Texas,121,Denton,33.219069,-97.196284
+8/1/2022,AQS,481391044,1,1.3,ppb,1,Italy,24,100,42602,Nitrogen dioxide (NO2),19100,"Dallas-Fort Worth-Arlington, TX",48,Texas,139,Ellis,32.175417,-96.870189
+8/1/2022,AQS,481410044,1,14,ppb,13,El Paso Chamizal,24,100,42602,Nitrogen dioxide (NO2),21340,"El Paso, TX",48,Texas,141,El Paso,31.765685,-106.455227
+8/1/2022,AQS,481410055,1,22.6,ppb,21,Ascarate Park SE,24,100,42602,Nitrogen dioxide (NO2),21340,"El Paso, TX",48,Texas,141,El Paso,31.746775,-106.402806
+8/1/2022,AQS,481671034,1,0.7,ppb,0,Galveston 99th Street,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,167,Galveston,29.254474,-94.861289
+8/1/2022,AQS,481830001,1,1.7,ppb,1,Longview,24,100,42602,Nitrogen dioxide (NO2),30980,"Longview, TX",48,Texas,183,Gregg,32.378696,-94.711813
+8/1/2022,AQS,482010024,1,18.3,ppb,17,Houston Aldine,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.901036,-95.326137
+8/1/2022,AQS,482010026,2,16.8,ppb,15,Channelview,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.802707,-95.125495
+8/1/2022,AQS,482010029,1,11.7,ppb,10,Northwest Harris County,22,92,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,30.039524,-95.673951
+8/1/2022,AQS,482010047,1,11.5,ppb,10,Lang,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.834167,-95.489167
+8/1/2022,AQS,482010055,1,9.9,ppb,8,Houston Bayland Park,21,88,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.695729,-95.499219
+8/1/2022,AQS,482010416,1,16.2,ppb,15,Park Place,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.686389,-95.294722
+8/1/2022,AQS,482010417,1,15.4,ppb,14,Houston Harvard Street,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.772915,-95.395784
+8/1/2022,AQS,482011015,1,6.1,ppb,6,Lynchburg Ferry,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.758889,-95.079444
+8/1/2022,AQS,482011034,1,13.3,ppb,12,Houston East,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.767997,-95.220582
+8/1/2022,AQS,482011035,1,19.6,ppb,18,Clinton,18,75,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.733726,-95.257593
+8/1/2022,AQS,482011039,4,7.6,ppb,7,Houston Deer Park #2,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.670025,-95.128508
+8/1/2022,AQS,482011050,1,8.6,ppb,8,Seabrook Friendship Park,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.583047,-95.015544
+8/1/2022,AQS,482011052,1,28.3,ppb,26,Houston North Loop,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.81453,-95.38769
+8/1/2022,AQS,482011066,1,13,ppb,12,Houston Southwest Freeway,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,201,Harris,29.7216,-95.49265
+8/1/2022,AQS,482030002,1,4.8,ppb,4,Karnack,23,96,42602,Nitrogen dioxide (NO2),32220,"Marshall, TX",48,Texas,203,Harrison,32.669001,-94.167468
+8/1/2022,AQS,482311006,1,5.1,ppb,5,Greenville,24,100,42602,Nitrogen dioxide (NO2),19100,"Dallas-Fort Worth-Arlington, TX",48,Texas,231,Hunt,33.153088,-96.115572
+8/1/2022,AQS,482450009,1,8.8,ppb,8,Beaumont Downtown,24,100,42602,Nitrogen dioxide (NO2),13140,"Beaumont-Port Arthur, TX",48,Texas,245,Jefferson,30.036422,-94.071061
+8/1/2022,AQS,482450022,1,0.8,ppb,0,Hamshire,24,100,42602,Nitrogen dioxide (NO2),13140,"Beaumont-Port Arthur, TX",48,Texas,245,Jefferson,29.863957,-94.317802
+8/1/2022,AQS,482451035,1,3.7,ppb,3,Nederland 17th Street,24,100,42602,Nitrogen dioxide (NO2),13140,"Beaumont-Port Arthur, TX",48,Texas,245,Jefferson,29.979958,-94.004746
+8/1/2022,AQS,482551070,1,4.7,ppb,4,Karnes County,24,100,42602,Nitrogen dioxide (NO2),,,48,Texas,255,Karnes,28.88044,-97.888065
+8/1/2022,AQS,482570005,1,5.8,ppb,5,Kaufman,24,100,42602,Nitrogen dioxide (NO2),19100,"Dallas-Fort Worth-Arlington, TX",48,Texas,257,Kaufman,32.564968,-96.317687
+8/1/2022,AQS,483390078,1,3.4,ppb,3,Conroe Relocated,24,100,42602,Nitrogen dioxide (NO2),26420,"Houston-The Woodlands-Sugar Land, TX",48,Texas,339,Montgomery,30.350302,-95.425128
+8/1/2022,AQS,483491051,1,8.5,ppb,8,Corsicana Airport,19,79,42602,Nitrogen dioxide (NO2),18620,"Corsicana, TX",48,Texas,349,Navarro,32.031934,-96.399141
+8/1/2022,AQS,483611001,1,22.4,ppb,21,West Orange,24,100,42602,Nitrogen dioxide (NO2),13140,"Beaumont-Port Arthur, TX",48,Texas,361,Orange,30.085263,-93.761341
+8/1/2022,AQS,484230007,1,2.2,ppb,2,Tyler Airport Relocated,24,100,42602,Nitrogen dioxide (NO2),46340,"Tyler, TX",48,Texas,423,Smith,32.344027,-95.415754
+8/1/2022,AQS,484390075,1,5.3,ppb,5,Eagle Mountain Lake,24,100,42602,Nitrogen dioxide (NO2),19100,"Dallas-Fort Worth-Arlington, TX",48,Texas,439,Tarrant,32.987891,-97.477175
+8/1/2022,AQS,484391002,1,9,ppb,8,Fort Worth Northwest,24,100,42602,Nitrogen dioxide (NO2),19100,"Dallas-Fort Worth-Arlington, TX",48,Texas,439,Tarrant,32.80581,-97.356529
+8/1/2022,AQS,484391053,1,15.8,ppb,14,Fort Worth California Parkway North,23,96,42602,Nitrogen dioxide (NO2),19100,"Dallas-Fort Worth-Arlington, TX",48,Texas,439,Tarrant,32.664753,-97.337917
+8/1/2022,AQS,484392003,1,4,ppb,4,Keller,24,100,42602,Nitrogen dioxide (NO2),19100,"Dallas-Fort Worth-Arlington, TX",48,Texas,439,Tarrant,32.922492,-97.282099
+8/1/2022,AQS,484530014,2,3.5,ppb,3,Austin North Hills Drive,24,100,42602,Nitrogen dioxide (NO2),12420,"Austin-Round Rock, TX",48,Texas,453,Travis,30.354944,-97.761803
+8/1/2022,AQS,484931038,1,7,ppb,7,Floresville Hospital Boulevard,24,100,42602,Nitrogen dioxide (NO2),41700,"San Antonio-New Braunfels, TX",48,Texas,493,Wilson,29.1307,-98.1481
+8/1/2022,AQS,350010023,1,11.8,ppb,10,DEL NORTE HIGH SCHOOL,24,100,42602,Nitrogen dioxide (NO2),10740,"Albuquerque, NM",35,New Mexico,1,Bernalillo,35.1343,-106.5852
+8/1/2022,AQS,350010029,1,11.7,ppb,10,SOUTH VALLEY,24,100,42602,Nitrogen dioxide (NO2),10740,"Albuquerque, NM",35,New Mexico,1,Bernalillo,35.01708,-106.65739
+8/1/2022,AQS,350130021,1,9,ppb,8,6ZM Desert View,24,100,42602,Nitrogen dioxide (NO2),29740,"Las Cruces, NM",35,New Mexico,13,Dona Ana,31.79621812,-106.5844338
+8/1/2022,AQS,350130022,1,14,ppb,13,6ZN Santa Teresa,24,100,42602,Nitrogen dioxide (NO2),29740,"Las Cruces, NM",35,New Mexico,13,Dona Ana,31.78788495,-106.6833245
+8/1/2022,AQS,350151005,1,15,ppb,14,5ZR ON BLM LAND BORDERING RESIDENTIAL AREA OUTSIDE CARLSBAD CITY LIM,24,100,42602,Nitrogen dioxide (NO2),16100,"Carlsbad-Artesia, NM",35,New Mexico,15,Eddy,32.38011762,-104.2627263
+8/1/2022,AQS,350250008,1,4,ppb,4,5ZS Hobbs Jefferson,24,100,42602,Nitrogen dioxide (NO2),26020,"Hobbs, NM",35,New Mexico,25,Lea,32.726656,-103.122917
+8/1/2022,AQS,350450009,1,16,ppb,15,1ZB Bloomfield,24,100,42602,Nitrogen dioxide (NO2),22140,"Farmington, NM",35,New Mexico,45,San Juan,36.74222694,-107.9775667
+8/1/2022,AQS,350450018,1,9,ppb,8,,24,100,42602,Nitrogen dioxide (NO2),22140,"Farmington, NM",35,New Mexico,45,San Juan,36.80973516,-107.6521917
+8/1/2022,AQS,350450020,1,2.4,ppb,2,Chaco Culture NHP - Radio Repeater,24,100,42602,Nitrogen dioxide (NO2),22140,"Farmington, NM",35,New Mexico,45,San Juan,36.035,-107.904167
+8/1/2022,AQS,350451005,2,7,ppb,7,1H Substation,23,96,42602,Nitrogen dioxide (NO2),22140,"Farmington, NM",35,New Mexico,45,San Juan,36.79666715,-108.4731384
+8/1/2022,AQS,350451233,1,7.6,ppb,7,,24,100,42602,Nitrogen dioxide (NO2),22140,"Farmington, NM",35,New Mexico,45,San Juan,36.8071,-108.69523
+8/1/2022,AQS,401091037,1,7,ppb,7,OKC NORTH,24,100,42602,Nitrogen dioxide (NO2),36420,"Oklahoma City, OK",40,Oklahoma,109,Oklahoma,35.614131,-97.475083
+8/1/2022,AQS,401359021,1,9.1,ppb,8,,19,79,42602,Nitrogen dioxide (NO2),22900,"Fort Smith, AR-OK",40,Oklahoma,135,Sequoyah,35.40814,-94.524413
+8/1/2022,AQS,401431127,1,13.8,ppb,12,NORTH TULSA - FIRE STATION#24,24,100,42602,Nitrogen dioxide (NO2),46140,"Tulsa, OK",40,Oklahoma,143,Tulsa,36.204902,-95.976537
+8/1/2022,AQS,50350005,1,6,ppb,6,MARION,24,100,42602,Nitrogen dioxide (NO2),32820,"Memphis, TN-MS-AR",5,Arkansas,35,Crittenden,35.19728763,-90.19314077
+8/1/2022,AQS,51190007,1,6.7,ppb,6,PARR,24,100,42602,Nitrogen dioxide (NO2),30780,"Little Rock-North Little Rock-Conway, AR",5,Arkansas,119,Pulaski,34.7561888,-92.28129586
+8/1/2022,AQS,220050004,1,10.7,ppb,9,Dutchtown,24,100,42602,Nitrogen dioxide (NO2),12940,"Baton Rouge, LA",22,Louisiana,5,Ascension,30.22965265,-90.9656281
+8/1/2022,AQS,220190008,1,10,ppb,9,Westlake,19,79,42602,Nitrogen dioxide (NO2),29340,"Lake Charles, LA",22,Louisiana,19,Calcasieu,30.26260412,-93.28508427
+8/1/2022,AQS,220330013,1,2.3,ppb,2,Pride,24,100,42602,Nitrogen dioxide (NO2),12940,"Baton Rouge, LA",22,Louisiana,33,East Baton Rouge,30.700895,-91.056068
+8/1/2022,AQS,220470009,1,3.4,ppb,3,Bayou Plaquemine,24,100,42602,Nitrogen dioxide (NO2),12940,"Baton Rouge, LA",22,Louisiana,47,Iberville,30.22125458,-91.31541823
+8/1/2022,AQS,220511001,1,26.3,ppb,25,Kenner,24,100,42602,Nitrogen dioxide (NO2),35380,"New Orleans-Metairie, LA",22,Louisiana,51,Jefferson,30.04123773,-90.27282584
+8/1/2022,AQS,220710021,1,28.3,ppb,26,I-610,24,100,42602,Nitrogen dioxide (NO2),35380,"New Orleans-Metairie, LA",22,Louisiana,71,Orleans,29.996013,-90.11819
+8/1/2022,AQS,221210001,1,19.3,ppb,18,Port Allen,24,100,42602,Nitrogen dioxide (NO2),12940,"Baton Rouge, LA",22,Louisiana,121,West Baton Rouge,30.500642,-91.213556
